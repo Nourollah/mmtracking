@@ -17,8 +17,7 @@ def l2_loss(pred, target):
         torch.Tensor: Calculated loss
     """
     assert pred.size() == target.size()
-    loss = torch.abs(pred - target)**2
-    return loss
+    return torch.abs(pred - target)**2
 
 
 @LOSSES.register_module()
@@ -66,13 +65,12 @@ class L2Loss(nn.Module):
                 Defaults to None.
         """
         assert reduction_override in (None, 'none', 'mean', 'sum')
-        reduction = (
-            reduction_override if reduction_override else self.reduction)
+        reduction = reduction_override or self.reduction
         pred, weight, avg_factor = self.update_weight(pred, target, weight,
                                                       avg_factor)
-        loss_bbox = self.loss_weight * l2_loss(
-            pred, target, weight, reduction=reduction, avg_factor=avg_factor)
-        return loss_bbox
+        return self.loss_weight * l2_loss(
+            pred, target, weight, reduction=reduction, avg_factor=avg_factor
+        )
 
     def update_weight(self, pred, target, weight, avg_factor):
         """Update the weight according to targets."""
@@ -81,10 +79,10 @@ class L2Loss(nn.Module):
 
         invalid_inds = weight <= 0
         target[invalid_inds] = -1
-        pos_inds = target == 1
         neg_inds = target == 0
 
         if self.pos_margin > 0:
+            pos_inds = target == 1
             pred[pos_inds] -= self.pos_margin
         if self.neg_margin > 0:
             pred[neg_inds] -= self.neg_margin

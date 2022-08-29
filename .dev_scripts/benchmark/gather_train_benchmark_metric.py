@@ -31,8 +31,7 @@ def parse_args():
     parser.add_argument(
         '--ncol', type=int, help='Number of column to be modified or appended')
 
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 
 if __name__ == '__main__':
@@ -56,7 +55,7 @@ if __name__ == '__main__':
     with open(args.txt_path, 'r') as f:
         model_cfgs = f.readlines()
         model_cfgs = [_ for _ in model_cfgs if 'configs' in _]
-        for i, config in enumerate(model_cfgs):
+        for config in model_cfgs:
             config = config.strip()
             if len(config) == 0:
                 continue
@@ -94,10 +93,7 @@ if __name__ == '__main__':
                     elif 'sot' in config:
                         sheet = readbook.sheet_by_name('sot')
                         table = xlrw.get_sheet('sot')
-                    sheet_info = {}
-                    for i in range(6, sheet.nrows):
-                        sheet_info[sheet.row_values(i)[0]] = i
-
+                    sheet_info = {sheet.row_values(i)[0]: i for i in range(6, sheet.nrows)}
                 # 2 determine whether total_epochs ckpt exists
                 ckpt_path = f'epoch_{total_epochs}.pth'
                 if osp.exists(osp.join(result_path, ckpt_path)) or \
@@ -107,46 +103,47 @@ if __name__ == '__main__':
                                                   '*.log.json'))))[-1]
 
                     # 3 read metric
-                    result_dict = dict()
+                    result_dict = {}
                     with open(log_json_path, 'r') as f:
-                        for line in f.readlines():
+                        for line in f:
                             log_line = json.loads(line)
                             if 'mode' not in log_line.keys():
                                 continue
 
-                            if log_line['mode'] == 'val' or \
-                                    log_line['mode'] == 'test':
+                            if log_line['mode'] in ['val', 'test']:
                                 result_dict[f"epoch_{log_line['epoch']}"] = {
                                     key: log_line[key]
                                     for key in eval_metrics if key in log_line
                                 }
                     # 4 find the best ckpt
-                    best_epoch_results = dict()
-                    for epoch in result_dict:
+                    best_epoch_results = {}
+                    for epoch, value in result_dict.items():
                         if len(best_epoch_results) == 0:
                             best_epoch_results = result_dict[epoch]
-                        else:
-                            if best_epoch_results[eval_metrics[
-                                    0]] < result_dict[epoch][eval_metrics[0]]:
-                                best_epoch_results = result_dict[epoch]
+                        elif (
+                            best_epoch_results[eval_metrics[0]]
+                            < value[eval_metrics[0]]
+                        ):
+                            best_epoch_results = result_dict[epoch]
 
                     for metric in best_epoch_results:
-                        if 'success' in best_epoch_results:
-                            performance = round(best_epoch_results[metric], 1)
-                        else:
-                            performance = round(
-                                best_epoch_results[metric] * 100, 1)
+                        performance = (
+                            round(best_epoch_results[metric], 1)
+                            if 'success' in best_epoch_results
+                            else round(best_epoch_results[metric] * 100, 1)
+                        )
+
                         best_epoch_results[metric] = performance
                     all_results_dict[config] = best_epoch_results
 
                     # update and append excel content
                     if args.excel:
-                        performance = ''
-                        for metric in best_epoch_results:
-                            performance += f'{best_epoch_results[metric]}/'
+                        performance = ''.join(
+                            f'{best_epoch_results[metric]}/'
+                            for metric in best_epoch_results
+                        )
 
-                        row_num = sheet_info.get(config, None)
-                        if row_num:
+                        if row_num := sheet_info.get(config, None):
                             table.write(row_num, args.ncol, performance)
                         else:
                             table.write(sheet.nrows, 0, config)

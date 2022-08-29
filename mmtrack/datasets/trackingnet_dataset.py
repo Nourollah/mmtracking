@@ -57,10 +57,12 @@ class TrackingNetDataset(BaseSOTDataset):
         if split == 'test':
             chunks = ['TEST']
         elif split == 'train':
-            if 'all' in self.chunks_list:
-                chunks = [f'TRAIN_{i}' for i in range(12)]
-            else:
-                chunks = [f'TRAIN_{chunk}' for chunk in self.chunks_list]
+            chunks = (
+                [f'TRAIN_{i}' for i in range(12)]
+                if 'all' in self.chunks_list
+                else [f'TRAIN_{chunk}' for chunk in self.chunks_list]
+            )
+
         else:
             raise NotImplementedError
 
@@ -145,7 +147,7 @@ class TrackingNetDataset(BaseSOTDataset):
         for num, video_info in zip(self.num_frames_per_video, self.data_infos):
             end_ind += num
             video_name = video_info['video_path'].split(os.sep)[-1]
-            video_txt = osp.join(resfile_path, '{}.txt'.format(video_name))
+            video_txt = osp.join(resfile_path, f'{video_name}.txt')
             with open(video_txt, 'w') as f:
                 for bbox in results['track_bboxes'][start_ind:end_ind]:
                     bbox = [

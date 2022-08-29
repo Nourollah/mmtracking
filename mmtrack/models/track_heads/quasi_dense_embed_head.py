@@ -184,8 +184,6 @@ class QuasiDenseEmbedHead(RoIEmbedHead):
                 - loss_track_aux (Tensor): Results of loss_track_aux function.
         """
 
-        losses = dict()
-
         loss_track = 0.
         loss_track_aux = 0.
         for _dists, _cos_dists, _targets, _weights in zip(
@@ -194,8 +192,7 @@ class QuasiDenseEmbedHead(RoIEmbedHead):
                 _dists, _targets, _weights, avg_factor=_weights.sum())
             if self.loss_track_aux is not None:
                 loss_track_aux += self.loss_track_aux(_cos_dists, _targets)
-        losses['loss_track'] = loss_track / len(dists)
-
+        losses = {'loss_track': loss_track / len(dists)}
         if self.loss_track_aux is not None:
             losses['loss_track_aux'] = loss_track_aux / len(dists)
 

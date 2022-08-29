@@ -133,7 +133,7 @@ class RoITrackHead(BaseModule, metaclass=ABCMeta):
                     feats=[lvl_feat[i][None] for lvl_feat in x])
                 sampling_results.append(sampling_result)
 
-        losses = dict()
+        losses = {}
 
         if self.with_track:
             track_results = self._track_forward_train(x, ref_x,
@@ -141,7 +141,7 @@ class RoITrackHead(BaseModule, metaclass=ABCMeta):
                                                       ref_gt_bboxes,
                                                       gt_instance_ids,
                                                       ref_gt_instance_ids)
-            losses.update(track_results['loss_track'])
+            losses |= track_results['loss_track']
 
         return losses
 
@@ -162,9 +162,7 @@ class RoITrackHead(BaseModule, metaclass=ABCMeta):
                                                     gt_instance_ids,
                                                     ref_gt_instance_ids)
         loss_track = self.embed_head.loss(similarity_logits, *track_targets)
-        track_results = dict(loss_track=loss_track)
-
-        return track_results
+        return dict(loss_track=loss_track)
 
     def simple_test(self, roi_feats, prev_roi_feats):
         """Test without augmentations."""

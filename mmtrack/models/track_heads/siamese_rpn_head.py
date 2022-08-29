@@ -73,8 +73,7 @@ class CorrelationHead(BaseModule):
         kernel = self.kernel_convs(kernel)
         search = self.search_convs(search)
         correlation_maps = depthwise_correlation(search, kernel)
-        out = self.head_convs(correlation_maps)
-        return out
+        return self.head_convs(correlation_maps)
 
 
 @HEADS.register_module()
@@ -193,9 +192,7 @@ class SiameseRPNHead(BaseModule):
             cls_weight = nn.functional.softmax(self.cls_weight, dim=0)
             reg_weight = nn.functional.softmax(self.reg_weight, dim=0)
         else:
-            reg_weight = cls_weight = [
-                1.0 / len(z_feats) for i in range(len(z_feats))
-            ]
+            reg_weight = cls_weight = [1.0 / len(z_feats) for _ in range(len(z_feats))]
 
         cls_score = 0
         bbox_pred = 0
@@ -396,15 +393,15 @@ class SiameseRPNHead(BaseModule):
         Returns:
             dict[str, Tensor]: a dictionary of loss components
         """
-        losses = {}
         N, _, H, W = cls_score.shape
 
         cls_score = cls_score.view(N, 2, -1, H, W)
         cls_score = cls_score.permute(0, 3, 4, 2, 1).contiguous().view(-1, 2)
         labels = labels.view(-1)
         labels_weights = labels_weights.view(-1)
-        losses['loss_rpn_cls'] = self.loss_cls(
-            cls_score, labels, weight=labels_weights)
+        losses = {
+            'loss_rpn_cls': self.loss_cls(cls_score, labels, weight=labels_weights)
+        }
 
         bbox_pred = bbox_pred.view(N, 4, -1, H, W)
         bbox_pred = bbox_pred.permute(0, 3, 4, 2, 1).contiguous().view(-1, 4)

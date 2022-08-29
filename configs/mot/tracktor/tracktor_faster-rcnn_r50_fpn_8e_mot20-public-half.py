@@ -38,19 +38,24 @@ test_pipeline = [
 ]
 data = dict(
     train=dict(
-        ann_file=data_root + 'annotations/half-train_cocoformat.json',
-        detection_file=data_root + 'annotations/half-train_detections.pkl',
-        img_prefix=data_root + 'train'),
+        ann_file=f'{data_root}annotations/half-train_cocoformat.json',
+        detection_file=f'{data_root}annotations/half-train_detections.pkl',
+        img_prefix=f'{data_root}train',
+    ),
     val=dict(
-        ann_file=data_root + 'annotations/half-val_cocoformat.json',
-        detection_file=data_root + 'annotations/half-val_detections.pkl',
-        img_prefix=data_root + 'train',
-        pipeline=test_pipeline),
+        ann_file=f'{data_root}annotations/half-val_cocoformat.json',
+        detection_file=f'{data_root}annotations/half-val_detections.pkl',
+        img_prefix=f'{data_root}train',
+        pipeline=test_pipeline,
+    ),
     test=dict(
-        ann_file=data_root + 'annotations/half-val_cocoformat.json',
-        detection_file=data_root + 'annotations/half-val_detections.pkl',
-        img_prefix=data_root + 'train',
-        pipeline=test_pipeline))
+        ann_file=f'{data_root}annotations/half-val_cocoformat.json',
+        detection_file=f'{data_root}annotations/half-val_detections.pkl',
+        img_prefix=f'{data_root}train',
+        pipeline=test_pipeline,
+    ),
+)
+
 # learning policy
 lr_config = dict(step=[6])
 # runtime settings

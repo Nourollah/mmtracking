@@ -312,28 +312,33 @@ class SOTResLayer(nn.Sequential):
                     norm_cfg=norm_cfg,
                     **kwargs))
             inplanes = planes * block.expansion
-            for _ in range(1, num_blocks):
-                layers.append(
-                    block(
-                        inplanes=inplanes,
-                        planes=planes,
-                        stride=1,
-                        dilation=dilation,
-                        conv_cfg=conv_cfg,
-                        norm_cfg=norm_cfg,
-                        **kwargs))
+            layers.extend(
+                block(
+                    inplanes=inplanes,
+                    planes=planes,
+                    stride=1,
+                    dilation=dilation,
+                    conv_cfg=conv_cfg,
+                    norm_cfg=norm_cfg,
+                    **kwargs
+                )
+                for _ in range(1, num_blocks)
+            )
 
         else:  # downsample_first=False is for HourglassModule
-            for _ in range(num_blocks - 1):
-                layers.append(
-                    block(
-                        inplanes=inplanes,
-                        planes=inplanes,
-                        stride=1,
-                        dilation=dilation,
-                        conv_cfg=conv_cfg,
-                        norm_cfg=norm_cfg,
-                        **kwargs))
+            layers.extend(
+                block(
+                    inplanes=inplanes,
+                    planes=inplanes,
+                    stride=1,
+                    dilation=dilation,
+                    conv_cfg=conv_cfg,
+                    norm_cfg=norm_cfg,
+                    **kwargs
+                )
+                for _ in range(num_blocks - 1)
+            )
+
             layers.append(
                 block(
                     inplanes=inplanes,

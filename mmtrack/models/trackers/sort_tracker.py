@@ -56,8 +56,7 @@ class SortTracker(BaseTracker):
     @property
     def confirmed_ids(self):
         """Confirmed ids in the tracker."""
-        ids = [id for id, track in self.tracks.items() if not track.tentative]
-        return ids
+        return [id for id, track in self.tracks.items() if not track.tentative]
 
     def init_track(self, id, obj):
         """Initialize a track."""
@@ -72,9 +71,11 @@ class SortTracker(BaseTracker):
     def update_track(self, id, obj):
         """Update a track."""
         super().update_track(id, obj)
-        if self.tracks[id].tentative:
-            if len(self.tracks[id]['bboxes']) >= self.num_tentatives:
-                self.tracks[id].tentative = False
+        if (
+            self.tracks[id].tentative
+            and len(self.tracks[id]['bboxes']) >= self.num_tentatives
+        ):
+            self.tracks[id].tentative = False
         bbox = bbox_xyxy_to_cxcyah(self.tracks[id].bboxes[-1])  # size = (1, 4)
         assert bbox.ndim == 2 and bbox.shape[0] == 1
         bbox = bbox.squeeze(0).cpu().numpy()
@@ -182,11 +183,11 @@ class SortTracker(BaseTracker):
                         if dist <= self.reid['match_score_thr']:
                             ids[c] = active_ids[r]
 
-            active_ids = [
-                id for id in self.ids if id not in ids
-                and self.tracks[id].frame_ids[-1] == frame_id - 1
-            ]
-            if len(active_ids) > 0:
+            if active_ids := [
+                id
+                for id in self.ids
+                if id not in ids and self.tracks[id].frame_ids[-1] == frame_id - 1
+            ]:
                 active_dets = torch.nonzero(ids == -1).squeeze(1)
                 track_bboxes = self.get('bboxes', active_ids)
                 ious = bbox_overlaps(

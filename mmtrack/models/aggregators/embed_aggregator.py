@@ -69,7 +69,7 @@ class EmbedAggregator(BaseModule):
             Tensor: The aggregated feature map with shape [1, C, H, W].
         """
         assert len(x.shape) == 4 and len(x) == 1, \
-            "Only support 'batch_size == 1' for x"
+                "Only support 'batch_size == 1' for x"
         x_embed = x
         for embed_conv in self.embed_convs:
             x_embed = embed_conv(x_embed)
@@ -82,5 +82,4 @@ class EmbedAggregator(BaseModule):
 
         ada_weights = torch.sum(ref_x_embed * x_embed, dim=1, keepdim=True)
         ada_weights = ada_weights.softmax(dim=0)
-        agg_x = torch.sum(ref_x * ada_weights, dim=0, keepdim=True)
-        return agg_x
+        return torch.sum(ref_x * ada_weights, dim=0, keepdim=True)

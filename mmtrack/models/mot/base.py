@@ -23,11 +23,10 @@ class BaseMultiObjectTracker(BaseModule, metaclass=ABCMeta):
         """Freeze module during training."""
         if isinstance(module, str):
             modules = [module]
+        elif isinstance(module, (list, tuple)):
+            modules = module
         else:
-            if not (isinstance(module, list) or isinstance(module, tuple)):
-                raise TypeError('module must be a str or a list.')
-            else:
-                modules = module
+            raise TypeError('module must be a str or a list.')
         for module in modules:
             m = getattr(self, module)
             m.eval()
@@ -200,10 +199,9 @@ class BaseMultiObjectTracker(BaseModule, metaclass=ABCMeta):
         losses = self(**data)
         loss, log_vars = self._parse_losses(losses)
 
-        outputs = dict(
-            loss=loss, log_vars=log_vars, num_samples=len(data['img_metas']))
-
-        return outputs
+        return dict(
+            loss=loss, log_vars=log_vars, num_samples=len(data['img_metas'])
+        )
 
     def val_step(self, data, optimizer):
         """The iteration step during validation.
@@ -215,10 +213,9 @@ class BaseMultiObjectTracker(BaseModule, metaclass=ABCMeta):
         losses = self(**data)
         loss, log_vars = self._parse_losses(losses)
 
-        outputs = dict(
-            loss=loss, log_vars=log_vars, num_samples=len(data['img_metas']))
-
-        return outputs
+        return dict(
+            loss=loss, log_vars=log_vars, num_samples=len(data['img_metas'])
+        )
 
     def show_result(self,
                     img,

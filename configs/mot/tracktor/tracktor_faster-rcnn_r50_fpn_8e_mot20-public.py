@@ -20,14 +20,18 @@ model = dict(
 data_root = 'data/MOT20/'
 test_set = 'test'
 data = dict(
-    train=dict(ann_file=data_root + 'annotations/train_cocoformat.json'),
+    train=dict(ann_file=f'{data_root}annotations/train_cocoformat.json'),
     val=dict(
-        ann_file=data_root + 'annotations/train_cocoformat.json',
-        detection_file=data_root + 'annotations/train_detections.pkl'),
+        ann_file=f'{data_root}annotations/train_cocoformat.json',
+        detection_file=f'{data_root}annotations/train_detections.pkl',
+    ),
     test=dict(
-        ann_file=data_root + f'annotations/{test_set}_cocoformat.json',
+        ann_file=f'{data_root}annotations/{test_set}_cocoformat.json',
         img_prefix=data_root + test_set,
-        detection_file=data_root + f'annotations/{test_set}_detections.pkl'))
+        detection_file=f'{data_root}annotations/{test_set}_detections.pkl',
+    ),
+)
+
 # learning policy
 lr_config = dict(step=[6])
 # runtime settings

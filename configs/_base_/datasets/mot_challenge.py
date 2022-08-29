@@ -52,23 +52,28 @@ data = dict(
     train=dict(
         type=dataset_type,
         visibility_thr=-1,
-        ann_file=data_root + 'annotations/half-train_cocoformat.json',
-        img_prefix=data_root + 'train',
+        ann_file=f'{data_root}annotations/half-train_cocoformat.json',
+        img_prefix=f'{data_root}train',
         ref_img_sampler=dict(
             num_ref_imgs=1,
             frame_range=10,
             filter_key_img=True,
-            method='uniform'),
-        pipeline=train_pipeline),
+            method='uniform',
+        ),
+        pipeline=train_pipeline,
+    ),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/half-val_cocoformat.json',
-        img_prefix=data_root + 'train',
+        ann_file=f'{data_root}annotations/half-val_cocoformat.json',
+        img_prefix=f'{data_root}train',
         ref_img_sampler=None,
-        pipeline=test_pipeline),
+        pipeline=test_pipeline,
+    ),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/half-val_cocoformat.json',
-        img_prefix=data_root + 'train',
+        ann_file=f'{data_root}annotations/half-val_cocoformat.json',
+        img_prefix=f'{data_root}train',
         ref_img_sampler=None,
-        pipeline=test_pipeline))
+        pipeline=test_pipeline,
+    ),
+)

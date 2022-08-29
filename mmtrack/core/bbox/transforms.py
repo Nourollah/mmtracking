@@ -79,8 +79,7 @@ def bbox_xyxy_to_cxcyah(bboxes):
     cy = (bboxes[:, 3] + bboxes[:, 1]) / 2
     w = bboxes[:, 2] - bboxes[:, 0]
     h = bboxes[:, 3] - bboxes[:, 1]
-    xyah = torch.stack([cx, cy, w / h, h], -1)
-    return xyah
+    return torch.stack([cx, cy, w / h, h], -1)
 
 
 def bbox_cxcyah_to_xyxy(bboxes):

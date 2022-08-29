@@ -52,8 +52,7 @@ class YTVIS:
         :return:
         """
         # load dataset
-        self.dataset, self.anns, self.cats, self.vids = dict(), dict(), dict(
-        ), dict()
+        self.dataset, self.anns, self.cats, self.vids = {}, {}, {}, {}
         self.vidToAnns, self.catToVids = defaultdict(list), defaultdict(list)
         if annotation_file is not None:
             print('loading annotations into memory...')
@@ -62,10 +61,10 @@ class YTVIS:
                 dataset = json.load(open(annotation_file, 'r'))
             else:
                 dataset = annotation_file
-            assert type(
-                dataset
-            ) == dict, 'annotation file format {} not supported'.format(
-                type(dataset))
+            assert (
+                type(dataset) == dict
+            ), f'annotation file format {type(dataset)} not supported'
+
             print('Done (t={:0.2f}s)'.format(time.time() - tic))
             self.dataset = dataset
             self.createIndex()
@@ -117,7 +116,7 @@ class YTVIS:
         if len(vidIds) == len(catIds) == len(areaRng) == 0:
             anns = self.dataset['annotations']
         else:
-            if not len(vidIds) == 0:
+            if len(vidIds) != 0:
                 lists = [
                     self.vidToAnns[vidId] for vidId in vidIds
                     if vidId in self.vidToAnns
@@ -132,11 +131,11 @@ class YTVIS:
                 ann for ann in anns if ann['avg_area'] > areaRng[0]
                 and ann['avg_area'] < areaRng[1]
             ]
-        if iscrowd is not None:
-            ids = [ann['id'] for ann in anns if ann['iscrowd'] == iscrowd]
-        else:
-            ids = [ann['id'] for ann in anns]
-        return ids
+        return (
+            [ann['id'] for ann in anns if ann['iscrowd'] == iscrowd]
+            if iscrowd is not None
+            else [ann['id'] for ann in anns]
+        )
 
     def getCatIds(self, catNms=[], supNms=[], catIds=[]):
         """filtering parameters. default skips that filter.
@@ -150,10 +149,8 @@ class YTVIS:
         supNms = supNms if _isArrayLike(supNms) else [supNms]
         catIds = catIds if _isArrayLike(catIds) else [catIds]
 
-        if len(catNms) == len(supNms) == len(catIds) == 0:
-            cats = self.dataset['categories']
-        else:
-            cats = self.dataset['categories']
+        cats = self.dataset['categories']
+        if not len(catNms) == len(supNms) == len(catIds) == 0:
             cats = cats if len(catNms) == 0 else [
                 cat for cat in cats if cat['name'] in catNms
             ]
@@ -163,8 +160,7 @@ class YTVIS:
             cats = cats if len(catIds) == 0 else [
                 cat for cat in cats if cat['id'] in catIds
             ]
-        ids = [cat['id'] for cat in cats]
-        return ids
+        return [cat['id'] for cat in cats]
 
     def getVidIds(self, vidIds=[], catIds=[]):
         """Get vid ids that satisfy given filter conditions.
@@ -227,12 +223,11 @@ class YTVIS:
         :return: res (obj)         : result api object
         """
         res = YTVIS()
-        res.dataset['videos'] = [img for img in self.dataset['videos']]
+        res.dataset['videos'] = list(self.dataset['videos'])
 
         print('Loading and preparing results...')
         tic = time.time()
-        if type(resFile) == str or (PYTHON_VERSION == 2
-                                    and type(resFile) == str):
+        if type(resFile) == str:
             anns = json.load(open(resFile))
         elif type(resFile) == np.ndarray:
             anns = self.loadNumpyAnnotations(resFile)
@@ -241,7 +236,7 @@ class YTVIS:
         assert type(anns) == list, 'results in not an array of objects'
         annsVidIds = [ann['video_id'] for ann in anns]
         assert set(annsVidIds) == (set(annsVidIds) & set(self.getVidIds())), \
-               'Results do not correspond to current coco set'
+                   'Results do not correspond to current coco set'
         if 'segmentations' in anns[0]:
             res.dataset['categories'] = copy.deepcopy(
                 self.dataset['categories'])
@@ -262,10 +257,7 @@ class YTVIS:
                             ann['bboxes'].append(None)
                 ann['id'] = id + 1
                 l_ori = [a for a in ann['areas'] if a]
-                if len(l_ori) == 0:
-                    ann['avg_area'] = 0
-                else:
-                    ann['avg_area'] = np.array(l_ori).mean()
+                ann['avg_area'] = np.array(l_ori).mean() if l_ori else 0
                 ann['iscrowd'] = 0
         print('DONE (t={:0.2f}s)'.format(time.time() - tic))
 
@@ -285,14 +277,13 @@ class YTVIS:
             # polygon -- a single object might consist of multiple parts
             # we merge all parts into one mask rle code
             rles = maskUtils.frPyObjects(segm, h, w)
-            rle = maskUtils.merge(rles)
+            return maskUtils.merge(rles)
         elif type(segm['counts']) == list:
             # uncompressed RLE
-            rle = maskUtils.frPyObjects(segm, h, w)
+            return maskUtils.frPyObjects(segm, h, w)
         else:
             # rle
-            rle = segm
-        return rle
+            return segm
 
     def annToMask(self, ann, frameId):
         """Convert annotation which can be polygons, uncompressed RLE, or RLE
@@ -301,5 +292,4 @@ class YTVIS:
         :return: binary mask (numpy 2D array)
         """
         rle = self.annToRLE(ann, frameId)
-        m = maskUtils.decode(rle)
-        return m
+        return maskUtils.decode(rle)

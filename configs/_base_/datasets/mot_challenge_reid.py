@@ -33,19 +33,24 @@ data = dict(
     train=dict(
         type=dataset_type,
         triplet_sampler=dict(num_ids=8, ins_per_id=4),
-        data_prefix=data_root + 'reid/imgs',
-        ann_file=data_root + 'reid/meta/train_80.txt',
-        pipeline=train_pipeline),
+        data_prefix=f'{data_root}reid/imgs',
+        ann_file=f'{data_root}reid/meta/train_80.txt',
+        pipeline=train_pipeline,
+    ),
     val=dict(
         type=dataset_type,
         triplet_sampler=None,
-        data_prefix=data_root + 'reid/imgs',
-        ann_file=data_root + 'reid/meta/val_20.txt',
-        pipeline=test_pipeline),
+        data_prefix=f'{data_root}reid/imgs',
+        ann_file=f'{data_root}reid/meta/val_20.txt',
+        pipeline=test_pipeline,
+    ),
     test=dict(
         type=dataset_type,
         triplet_sampler=None,
-        data_prefix=data_root + 'reid/imgs',
-        ann_file=data_root + 'reid/meta/val_20.txt',
-        pipeline=test_pipeline))
+        data_prefix=f'{data_root}reid/imgs',
+        ann_file=f'{data_root}reid/meta/val_20.txt',
+        pipeline=test_pipeline,
+    ),
+)
+
 evaluation = dict(interval=1, metric='mAP')

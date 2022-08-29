@@ -41,8 +41,5 @@ class YOLOXModeSwitchHook(_YOLOXModeSwitchHook):
                 model.detector.bbox_head.use_l1 = True
             else:
                 model.bbox_head.use_l1 = True
-        else:
-            # Once the restart is complete, we need to restore
-            # the initialization flag.
-            if self._restart_dataloader:
-                train_loader._DataLoader__initialized = True
+        elif self._restart_dataloader:
+            train_loader._DataLoader__initialized = True

@@ -25,14 +25,14 @@ class CocoVID(COCO):
         """Convert image data to video data."""
         if 'images' in self.dataset:
             videos = []
-            for i, img in enumerate(self.dataset['images']):
+            for img in self.dataset['images']:
                 videos.append(dict(id=img['id'], name=img['file_name']))
                 img['video_id'] = img['id']
                 img['frame_id'] = 0
             dataset['videos'] = videos
 
         if 'annotations' in self.dataset:
-            for i, ann in enumerate(self.dataset['annotations']):
+            for ann in self.dataset['annotations']:
                 ann['video_id'] = ann['image_id']
                 ann['instance_id'] = ann['id']
         return dataset
@@ -102,11 +102,7 @@ class CocoVID(COCO):
         """
         vidIds = vidIds if _isArrayLike(vidIds) else [vidIds]
 
-        if len(vidIds) == 0:
-            ids = self.videos.keys()
-        else:
-            ids = set(vidIds)
-
+        ids = self.videos.keys() if len(vidIds) == 0 else set(vidIds)
         return list(ids)
 
     def get_img_ids_from_vid(self, vidId):

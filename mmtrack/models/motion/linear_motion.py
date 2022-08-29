@@ -34,10 +34,7 @@ class LinearMotion(object):
 
         vs = []
         for (b1, b2) in zip(bboxes[-num_samples:], bboxes[-num_samples + 1:]):
-            if self.center_motion:
-                v = self.center(b2) - self.center(b1)
-            else:
-                v = b2 - b1
+            v = self.center(b2) - self.center(b1) if self.center_motion else b2 - b1
             vs.append(v)
         return torch.stack(vs, dim=0).mean(dim=0)
 

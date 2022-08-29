@@ -75,7 +75,7 @@ class FlowNetSimple(BaseModule):
                     bias=True,
                     conv_cfg=dict(type='Conv'),
                     act_cfg=dict(type='LeakyReLU', negative_slope=0.1)))
-            for j in range(1, num_convs):
+            for _ in range(1, num_convs):
                 kernel_size = 3 if i == 2 else kernel_size
                 conv_layer.append(
                     ConvModule(

@@ -36,7 +36,6 @@ def flow_warp_feats(x, flow):
     # [N, H, W, 2]
     grid = grid.permute(0, 2, 3, 1)
 
-    # 3. warp features.
-    x_warp = torch.nn.functional.grid_sample(
-        x, grid, padding_mode='border', align_corners=True)
-    return x_warp
+    return torch.nn.functional.grid_sample(
+        x, grid, padding_mode='border', align_corners=True
+    )

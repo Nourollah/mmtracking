@@ -37,37 +37,44 @@ data = dict(
     train=[
         dict(
             type=dataset_type,
-            ann_file=data_root + 'annotations/imagenet_vid_train.json',
-            img_prefix=data_root + 'Data/VID',
+            ann_file=f'{data_root}annotations/imagenet_vid_train.json',
+            img_prefix=f'{data_root}Data/VID',
             ref_img_sampler=dict(
                 num_ref_imgs=1,
                 frame_range=9,
                 filter_key_img=False,
-                method='uniform'),
-            pipeline=train_pipeline),
+                method='uniform',
+            ),
+            pipeline=train_pipeline,
+        ),
         dict(
             type=dataset_type,
             load_as_video=False,
-            ann_file=data_root + 'annotations/imagenet_det_30plus1cls.json',
-            img_prefix=data_root + 'Data/DET',
+            ann_file=f'{data_root}annotations/imagenet_det_30plus1cls.json',
+            img_prefix=f'{data_root}Data/DET',
             ref_img_sampler=dict(
                 num_ref_imgs=1,
                 frame_range=0,
                 filter_key_img=False,
-                method='uniform'),
-            pipeline=train_pipeline)
+                method='uniform',
+            ),
+            pipeline=train_pipeline,
+        ),
     ],
     val=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/imagenet_vid_val.json',
-        img_prefix=data_root + 'Data/VID',
+        ann_file=f'{data_root}annotations/imagenet_vid_val.json',
+        img_prefix=f'{data_root}Data/VID',
         ref_img_sampler=None,
         pipeline=test_pipeline,
-        test_mode=True),
+        test_mode=True,
+    ),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/imagenet_vid_val.json',
-        img_prefix=data_root + 'Data/VID',
+        ann_file=f'{data_root}annotations/imagenet_vid_val.json',
+        img_prefix=f'{data_root}Data/VID',
         ref_img_sampler=None,
         pipeline=test_pipeline,
-        test_mode=True))
+        test_mode=True,
+    ),
+)

@@ -22,17 +22,20 @@ for f in files:
         content = content_file.read()
 
     title = content.split('\n')[0].replace('#', '').strip()
-    ckpts = set(x.lower().strip()
-                for x in re.findall(r'https?://download.*\.pth', content)
-                if 'mmtracking' in x)
-    if len(ckpts) == 0:
+    ckpts = {
+        x.lower().strip()
+        for x in re.findall(r'https?://download.*\.pth', content)
+        if 'mmtracking' in x
+    }
+
+    if not ckpts:
         continue
 
-    _papertype = [x for x in re.findall(r'\s*\[([A-Z]*?)\]\s*', content)]
-    assert len(_papertype) > 0
+    _papertype = list(re.findall(r'\s*\[([A-Z]*?)\]\s*', content))
+    assert _papertype
     papertype = _papertype[0]
 
-    paper = set([(papertype, title)])
+    paper = {(papertype, title)}
 
     titles.append(title)
     num_ckpts += len(ckpts)

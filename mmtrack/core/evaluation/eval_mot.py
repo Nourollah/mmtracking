@@ -43,9 +43,7 @@ def acc_single_video(results,
                      ignore_by_classes=False):
     """Accumulate results in a single video."""
     num_classes = len(results[0])
-    accumulators = [
-        mm.MOTAccumulator(auto_id=True) for i in range(num_classes)
-    ]
+    accumulators = [mm.MOTAccumulator(auto_id=True) for _ in range(num_classes)]
     for result, gt in zip(results, gts):
         if ignore_by_classes:
             gt_ignore = outs2results(
@@ -53,7 +51,7 @@ def acc_single_video(results,
                 labels=gt['labels_ignore'],
                 num_classes=num_classes)['bbox_results']
         else:
-            gt_ignore = [gt['bboxes_ignore'] for i in range(num_classes)]
+            gt_ignore = [gt['bboxes_ignore'] for _ in range(num_classes)]
         gt = outs2results(
             bboxes=gt['bboxes'],
             labels=gt['labels'],
@@ -88,7 +86,7 @@ def aggregate_accs(accumulators, classes):
     """Aggregate results from each class."""
     # accs for each class
     items = list(classes)
-    names, accs = [[] for c in classes], [[] for c in classes]
+    names, accs = [[] for _ in classes], [[] for _ in classes]
     for video_ind, _accs in enumerate(accumulators):
         for cls_ind, acc in enumerate(_accs):
             if len(acc._events['Type']) == 0:

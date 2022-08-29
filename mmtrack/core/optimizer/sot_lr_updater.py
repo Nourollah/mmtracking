@@ -22,8 +22,7 @@ def step_lr_interval(start_lr_factor, end_lr_factor, start_epoch, end_epoch):
     """
     epochs = end_epoch - start_epoch
     mult = math.pow(end_lr_factor / start_lr_factor, 1. / (epochs))
-    lr_intervals = start_lr_factor * (mult**np.arange(epochs))
-    return lr_intervals
+    return start_lr_factor * (mult**np.arange(epochs))
 
 
 def log_lr_interval(start_lr_factor, end_lr_factor, start_epoch, end_epoch):
@@ -43,9 +42,9 @@ def log_lr_interval(start_lr_factor, end_lr_factor, start_epoch, end_epoch):
         ndarray: The logarithmically varying learning rate.
     """
     epochs = end_epoch - start_epoch
-    lr_intervals = np.logspace(
-        math.log10(start_lr_factor), math.log10(end_lr_factor), epochs)
-    return lr_intervals
+    return np.logspace(
+        math.log10(start_lr_factor), math.log10(end_lr_factor), epochs
+    )
 
 
 @HOOKS.register_module()

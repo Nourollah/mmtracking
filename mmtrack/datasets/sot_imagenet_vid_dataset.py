@@ -38,8 +38,7 @@ class SOTImageNetVIDDataset(BaseSOTDataset):
             list[int]: The length of the list is the number of instances. The
                 elemment in the list is instance ID in coco API.
         """
-        data_infos = list(self.coco.instancesToImgs.keys())
-        return data_infos
+        return list(self.coco.instancesToImgs.keys())
 
     def get_bboxes_from_video(self, video_ind):
         """Get bbox annotation about the instance in a video. Considering
@@ -57,9 +56,12 @@ class SOTImageNetVIDDataset(BaseSOTDataset):
         img_ids = self.coco.instancesToImgs[instance_id]
         bboxes = []
         for img_id in img_ids:
-            for ann in self.coco.imgToAnns[img_id]:
-                if ann['instance_id'] == instance_id:
-                    bboxes.append(ann['bbox'])
+            bboxes.extend(
+                ann['bbox']
+                for ann in self.coco.imgToAnns[img_id]
+                if ann['instance_id'] == instance_id
+            )
+
         bboxes = np.array(bboxes).reshape(-1, 4)
         return bboxes
 
@@ -80,9 +82,7 @@ class SOTImageNetVIDDataset(BaseSOTDataset):
         for img_id in img_ids:
             frame_ids.append(self.coco.imgs[img_id]['frame_id'])
             img_names.append(self.coco.imgs[img_id]['file_name'])
-        img_infos = dict(
-            filename=img_names, frame_ids=frame_ids, video_id=video_ind)
-        return img_infos
+        return dict(filename=img_names, frame_ids=frame_ids, video_id=video_ind)
 
     def get_ann_infos_from_video(self, video_ind):
         """Get annotation information in a video.
@@ -125,11 +125,13 @@ class SOTImageNetVIDDataset(BaseSOTDataset):
         img_ids = self.coco.instancesToImgs[instance_id]
         visible = []
         for img_id in img_ids:
-            for ann in self.coco.imgToAnns[img_id]:
-                if ann['instance_id'] == instance_id:
-                    visible.append(not ann.get('occluded', False))
-        visible_info = dict(visible=np.array(visible, dtype=np.bool_))
-        return visible_info
+            visible.extend(
+                not ann.get('occluded', False)
+                for ann in self.coco.imgToAnns[img_id]
+                if ann['instance_id'] == instance_id
+            )
+
+        return dict(visible=np.array(visible, dtype=np.bool_))
 
     def get_len_per_video(self, video_ind):
         """Get the number of frames in a video."""

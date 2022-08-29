@@ -102,10 +102,7 @@ class YTVISeval:
                         rle = coco.annToRLE(ann, i)
                         ann['segmentations'][i] = rle
                 l_ori = [a for a in ann['areas'] if a]
-                if len(l_ori) == 0:
-                    ann['avg_area'] = 0
-                else:
-                    ann['avg_area'] = np.array(l_ori).mean()
+                ann['avg_area'] = np.array(l_ori).mean() if l_ori else 0
 
         p = self.params
         if p.useCats:
@@ -149,9 +146,8 @@ class YTVISeval:
         # add backward compatibility if useSegm is specified in params
         if p.useSegm is not None:
             p.iouType = 'segm' if p.useSegm == 1 else 'bbox'
-            print('useSegm (deprecated) is not None. Running {} evaluation'.
-                  format(p.iouType))
-        print('Evaluate annotation type *{}*'.format(p.iouType))
+            print(f'useSegm (deprecated) is not None. Running {p.iouType} evaluation')
+        print(f'Evaluate annotation type *{p.iouType}*')
         p.vidIds = list(np.unique(p.vidIds))
         if p.useCats:
             p.catIds = list(np.unique(p.catIds))
@@ -162,7 +158,7 @@ class YTVISeval:
         # loop through images, area range, max detection number
         catIds = p.catIds if p.useCats else [-1]
 
-        if p.iouType == 'segm' or p.iouType == 'bbox':
+        if p.iouType in ['segm', 'bbox']:
             computeIoU = self.computeIoU
         elif p.iouType == 'keypoints':
             computeIoU = self.computeOks
@@ -193,7 +189,7 @@ class YTVISeval:
         inds = np.argsort([-d['score'] for d in dt], kind='mergesort')
         dt = [dt[i] for i in inds]
         if len(dt) > p.maxDets[-1]:
-            dt = dt[0:p.maxDets[-1]]
+            dt = dt[:p.maxDets[-1]]
 
         if p.iouType == 'segm':
             g = [g['segmentations'] for g in gt]
@@ -217,7 +213,7 @@ class YTVISeval:
                     u += maskUtils.area(g)
                 elif d and not g:
                     u += maskUtils.area(d)
-            if not u > .0:
+            if u <= 0.0:
                 print('Mask sizes in video {} and category {} may not match!'.
                       format(vidId, catId))
             iou = i / u if u > .0 else .0
@@ -237,7 +233,7 @@ class YTVISeval:
         inds = np.argsort([-d['score'] for d in dts], kind='mergesort')
         dts = [dts[i] for i in inds]
         if len(dts) > p.maxDets[-1]:
-            dts = dts[0:p.maxDets[-1]]
+            dts = dts[:p.maxDets[-1]]
         # if len(gts) == 0 and len(dts) == 0:
         if len(gts) == 0 or len(dts) == 0:
             return []
@@ -252,7 +248,7 @@ class YTVISeval:
         for j, gt in enumerate(gts):
             # create bounds for ignore regions(double the gt bbox)
             g = np.array(gt['keypoints'])
-            xg = g[0::3]
+            xg = g[::3]
             yg = g[1::3]
             vg = g[2::3]
             k1 = np.count_nonzero(vg > 0)
@@ -263,7 +259,7 @@ class YTVISeval:
             y1 = bb[1] + bb[3] * 2
             for i, dt in enumerate(dts):
                 d = np.array(dt['keypoints'])
-                xd = d[0::3]
+                xd = d[::3]
                 yd = d[1::3]
                 if k1 > 0:
                     # measure the per-keypoint distance if keypoints visible
@@ -309,7 +305,7 @@ class YTVISeval:
         gtind = np.argsort([g['_ignore'] for g in gt], kind='mergesort')
         gt = [gt[i] for i in gtind]
         dtind = np.argsort([-d['score'] for d in dt], kind='mergesort')
-        dt = [dt[i] for i in dtind[0:maxDet]]
+        dt = [dt[i] for i in dtind[:maxDet]]
         iscrowd = [int(o['iscrowd']) for o in gt]
         # load computed ious
         ious = self.ious[vidId, catId][:, gtind] if len(
@@ -322,7 +318,7 @@ class YTVISeval:
         dtm = np.zeros((T, D))
         gtIg = np.array([g['_ignore'] for g in gt])
         dtIg = np.zeros((T, D))
-        if not len(ious) == 0:
+        if len(ious) != 0:
             for tind, t in enumerate(p.iouThrs):
                 for dind, d in enumerate(dt):
                     # information about best match so far (m=-1 -> unmatched)

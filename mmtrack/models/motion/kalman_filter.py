@@ -201,8 +201,7 @@ class KalmanFilter(object):
             lower=True,
             check_finite=False,
             overwrite_b=True)
-        squared_maha = np.sum(z * z, axis=0)
-        return squared_maha
+        return np.sum(z * z, axis=0)
 
     def track(self, tracks, bboxes):
         """Track forward.

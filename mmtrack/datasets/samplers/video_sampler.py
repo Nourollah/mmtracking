@@ -74,10 +74,11 @@ class DistributedVideoSampler(_DistributedSampler):
                     ])
                 self.indices.append(indices_chunk)
         else:
-            first_frame_indices = []
-            for i, img_info in enumerate(self.dataset.data_infos):
-                if img_info['frame_id'] == 0:
-                    first_frame_indices.append(i)
+            first_frame_indices = [
+                i
+                for i, img_info in enumerate(self.dataset.data_infos)
+                if img_info['frame_id'] == 0
+            ]
 
             if len(first_frame_indices) < num_replicas:
                 raise ValueError(

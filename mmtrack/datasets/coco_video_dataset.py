@@ -55,11 +55,11 @@ class CocoVideoDataset(CocoDataset):
         Returns:
             list[dict]: Annotation information from COCO/COCOVID api.
         """
-        if not self.load_as_video:
-            data_infos = super().load_annotations(ann_file)
-        else:
-            data_infos = self.load_video_anns(ann_file)
-        return data_infos
+        return (
+            self.load_video_anns(ann_file)
+            if self.load_as_video
+            else super().load_annotations(ann_file)
+        )
 
     def load_video_anns(self, ann_file):
         """Load annotations from COCOVID style annotation file.
@@ -145,7 +145,7 @@ class CocoVideoDataset(CocoDataset):
             raise TypeError('The type of frame_range must be int or list.')
 
         if 'test' in method and \
-                (frame_range[1] - frame_range[0]) != num_ref_imgs:
+                    (frame_range[1] - frame_range[0]) != num_ref_imgs:
             print_log(
                 'Warning:'
                 "frame_range[1] - frame_range[0] isn't equal to num_ref_imgs."
@@ -154,11 +154,10 @@ class CocoVideoDataset(CocoDataset):
             self.ref_img_sampler[
                 'num_ref_imgs'] = frame_range[1] - frame_range[0]
 
+        ref_img_infos = []
         if (not self.load_as_video) or img_info.get('frame_id', -1) < 0 \
-                or (frame_range[0] == 0 and frame_range[1] == 0):
-            ref_img_infos = []
-            for i in range(num_ref_imgs):
-                ref_img_infos.append(img_info.copy())
+                    or (frame_range[0] == 0 and frame_range[1] == 0):
+            ref_img_infos.extend(img_info.copy() for _ in range(num_ref_imgs))
         else:
             vid_id, img_id, frame_id = img_info['video_id'], img_info[
                 'id'], img_info['frame_id']
@@ -175,7 +174,7 @@ class CocoVideoDataset(CocoDataset):
                 ref_img_ids.extend(random.sample(valid_ids, num_samples))
             elif method == 'bilateral_uniform':
                 assert num_ref_imgs % 2 == 0, \
-                    'only support load even number of ref_imgs.'
+                        'only support load even number of ref_imgs.'
                 for mode in ['left', 'right']:
                     if mode == 'left':
                         valid_ids = img_ids[left:frame_id + 1]
@@ -194,8 +193,7 @@ class CocoVideoDataset(CocoDataset):
                         ref_img_ids.append(img_ids[ref_id])
             elif method == 'test_with_fix_stride':
                 if frame_id == 0:
-                    for i in range(frame_range[0], 1):
-                        ref_img_ids.append(img_ids[0])
+                    ref_img_ids.extend(img_ids[0] for _ in range(frame_range[0], 1))
                     for i in range(1, frame_range[1] + 1):
                         ref_id = min(round(i * stride), len(img_ids) - 1)
                         ref_img_ids.append(img_ids[ref_id])
@@ -205,22 +203,18 @@ class CocoVideoDataset(CocoDataset):
                         len(img_ids) - 1)
                     ref_img_ids.append(img_ids[ref_id])
                 img_info['num_left_ref_imgs'] = abs(frame_range[0]) \
-                    if isinstance(frame_range, list) else frame_range
+                        if isinstance(frame_range, list) else frame_range
                 img_info['frame_stride'] = stride
             else:
                 raise NotImplementedError
 
-            ref_img_infos = []
             for ref_img_id in ref_img_ids:
                 ref_img_info = self.coco.load_imgs([ref_img_id])[0]
                 ref_img_info['filename'] = ref_img_info['file_name']
                 ref_img_infos.append(ref_img_info)
             ref_img_infos = sorted(ref_img_infos, key=lambda i: i['frame_id'])
 
-        if return_key_img:
-            return [img_info, *ref_img_infos]
-        else:
-            return ref_img_infos
+        return [img_info, *ref_img_infos] if return_key_img else ref_img_infos
 
     def get_ann_info(self, img_info):
         """Get COCO annotations by the information of image.
@@ -311,7 +305,7 @@ class CocoVideoDataset(CocoDataset):
         gt_masks = []
         gt_instance_ids = []
 
-        for i, ann in enumerate(ann_info):
+        for ann in ann_info:
             if ann.get('ignore', False):
                 continue
             x1, y1, w, h = ann['bbox']
@@ -401,7 +395,7 @@ class CocoVideoDataset(CocoDataset):
             if metric not in allowed_metrics:
                 raise KeyError(f'metric {metric} is not supported.')
 
-        eval_results = dict()
+        eval_results = {}
         if 'track' in metrics:
             assert len(self.data_infos) == len(results['track_bboxes'])
             inds = [
@@ -424,18 +418,17 @@ class CocoVideoDataset(CocoDataset):
                 logger=logger,
                 classes=self.CLASSES,
                 **track_kwargs)
-            eval_results.update(track_eval_results)
+            eval_results |= track_eval_results
 
         # evaluate for detectors without tracker
         super_metrics = ['bbox', 'segm']
-        super_metrics = [_ for _ in metrics if _ in super_metrics]
-        if super_metrics:
+        if super_metrics := [_ for _ in metrics if _ in super_metrics]:
             if isinstance(results, dict):
                 if 'bbox' in super_metrics and 'segm' in super_metrics:
-                    super_results = []
-                    for bbox, mask in zip(results['det_bboxes'],
-                                          results['det_masks']):
-                        super_results.append((bbox, mask))
+                    super_results = list(
+                        zip(results['det_bboxes'], results['det_masks'])
+                    )
+
                 else:
                     super_results = results['det_bboxes']
             elif isinstance(results, list):
@@ -484,13 +477,10 @@ class CocoVideoDataset(CocoDataset):
             if len(row_data) == 10:
                 table_data.append(row_data)
                 row_data = []
+        if len(row_data) >= 2 and row_data[-1] == '0':
+            row_data = row_data[:-2]
         if len(row_data) >= 2:
-            if row_data[-1] == '0':
-                row_data = row_data[:-2]
-            if len(row_data) >= 2:
-                table_data.append([])
-                table_data.append(row_data)
-
+            table_data.extend(([], row_data))
         table = AsciiTable(table_data)
         result += table.table
         return result

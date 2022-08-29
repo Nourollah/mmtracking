@@ -59,11 +59,7 @@ def single_gpu_test(model,
             ori_h, ori_w = img_meta['ori_shape'][:-1]
             img_show = mmcv.imresize(img_show, (ori_w, ori_h))
 
-            if out_dir:
-                out_file = osp.join(out_dir, img_meta['ori_filename'])
-            else:
-                out_file = None
-
+            out_file = osp.join(out_dir, img_meta['ori_filename']) if out_dir else None
             model.module.show_result(
                 img_show,
                 result,
@@ -144,7 +140,7 @@ def multi_gpu_test(model, data_loader, tmpdir=None, gpu_collect=False):
     if rank == 0:
         prog_bar = mmcv.ProgressBar(len(dataset))
     time.sleep(2)  # This line can prevent deadlock problem in some cases.
-    for i, data in enumerate(data_loader):
+    for data in data_loader:
         with torch.no_grad():
             result = model(return_loss=False, rescale=True, **data)
         for key in result:
@@ -203,16 +199,14 @@ def collect_results_cpu(result_part, tmpdir=None):
     # dump the part result to the dir
     mmcv.dump(result_part, osp.join(tmpdir, f'part_{rank}.pkl'))
     dist.barrier()
-    # collect all parts
     if rank != 0:
         return None
-    else:
-        # load results of all parts from tmp dir
-        part_list = defaultdict(list)
-        for i in range(world_size):
-            part_file = osp.join(tmpdir, f'part_{i}.pkl')
-            part_file = mmcv.load(part_file)
-            for k, v in part_file.items():
-                part_list[k].extend(v)
-        shutil.rmtree(tmpdir)
-        return part_list
+    # load results of all parts from tmp dir
+    part_list = defaultdict(list)
+    for i in range(world_size):
+        part_file = osp.join(tmpdir, f'part_{i}.pkl')
+        part_file = mmcv.load(part_file)
+        for k, v in part_file.items():
+            part_list[k].extend(v)
+    shutil.rmtree(tmpdir)
+    return part_list
