@@ -95,7 +95,7 @@ class YouTubeVISDataset(CocoVideoDataset):
         for i in range(num_vids):
             video_id = vid_infos[i]['id']
             # collect data for each instances in a video.
-            collect_data = dict()
+            collect_data = {}
             for frame_id, (bbox_res, mask_res) in enumerate(
                     zip(results['track_bboxes'][inds[i]:inds[i + 1]],
                         results['track_masks'][inds[i]:inds[i + 1]])):
@@ -107,8 +107,7 @@ class YouTubeVISDataset(CocoVideoDataset):
                 assert len(masks) == len(bboxes)
                 for j, id in enumerate(ids):
                     if id not in collect_data:
-                        collect_data[id] = dict(
-                            category_ids=[], scores=[], segmentations=dict())
+                        collect_data[id] = dict(category_ids=[], scores=[], segmentations={})
                     collect_data[id]['category_ids'].append(labels[j])
                     collect_data[id]['scores'].append(bboxes[j][4])
                     if isinstance(masks[j]['counts'], bytes):
@@ -116,10 +115,12 @@ class YouTubeVISDataset(CocoVideoDataset):
                     collect_data[id]['segmentations'][frame_id] = masks[j]
 
             # transform the collected data into official format
-            for id, id_data in collect_data.items():
-                output = dict()
-                output['video_id'] = video_id
-                output['score'] = np.array(id_data['scores']).mean().item()
+            for id_data in collect_data.values():
+                output = {
+                    'video_id': video_id,
+                    'score': np.array(id_data['scores']).mean().item(),
+                }
+
                 # majority voting for sequence category
                 output['category_id'] = np.bincount(
                     np.array(id_data['category_ids'])).argmax().item() + 1
@@ -170,11 +171,11 @@ class YouTubeVISDataset(CocoVideoDataset):
             if metric not in allowed_metrics:
                 raise KeyError(f'metric {metric} is not supported.')
 
-        eval_results = dict()
+        eval_results = {}
         test_results = self.format_results(results, save_as_json=False)
         vis_results = self.convert_back_to_vis_format()
         track_segm_results = eval_vis(test_results, vis_results, logger)
-        eval_results.update(track_segm_results)
+        eval_results |= track_segm_results
 
         return eval_results
 
@@ -202,9 +203,10 @@ class YouTubeVISDataset(CocoVideoDataset):
         vis_anns['categories'] = copy.deepcopy(self.coco.dataset['categories'])
         vis_anns['videos'] = copy.deepcopy(self.coco.dataset['videos'])
 
-        len_videos = dict()  # mapping from video_id to video_length
-        for video_id, video_infos in self.coco.vidToImgs.items():
-            len_videos[video_id] = len(video_infos)
+        len_videos = {
+            video_id: len(video_infos)
+            for video_id, video_infos in self.coco.vidToImgs.items()
+        }
 
         for video_id, ins_ids in self.coco.vidToInstances.items():
             cur_video_len = len_videos[video_id]

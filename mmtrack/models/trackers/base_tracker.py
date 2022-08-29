@@ -36,12 +36,12 @@ class BaseTracker(BaseModule, metaclass=ABCMeta):
     def reset(self):
         """Reset the buffer of the tracker."""
         self.num_tracks = 0
-        self.tracks = dict()
+        self.tracks = {}
 
     @property
     def empty(self):
         """Whether the buffer is empty or not."""
-        return False if self.tracks else True
+        return not self.tracks
 
     @property
     def ids(self):
@@ -62,7 +62,7 @@ class BaseTracker(BaseModule, metaclass=ABCMeta):
                 obligatory in the keys.
         """
         memo_items = [k for k, v in kwargs.items() if v is not None]
-        rm_items = [k for k in kwargs.keys() if k not in memo_items]
+        rm_items = [k for k in kwargs if k not in memo_items]
         for item in rm_items:
             kwargs.pop(item)
         if not hasattr(self, 'memo_items'):
@@ -94,10 +94,12 @@ class BaseTracker(BaseModule, metaclass=ABCMeta):
 
     def pop_invalid_tracks(self, frame_id):
         """Pop out invalid tracks."""
-        invalid_ids = []
-        for k, v in self.tracks.items():
-            if frame_id - v['frame_ids'][-1] >= self.num_frames_retain:
-                invalid_ids.append(k)
+        invalid_ids = [
+            k
+            for k, v in self.tracks.items()
+            if frame_id - v['frame_ids'][-1] >= self.num_frames_retain
+        ]
+
         for invalid_id in invalid_ids:
             self.tracks.pop(invalid_id)
 
@@ -132,10 +134,7 @@ class BaseTracker(BaseModule, metaclass=ABCMeta):
             for k, v in objs.items():
                 if k not in outs:
                     continue
-                if self.momentums is not None and k in self.momentums:
-                    v = v
-                else:
-                    v = v[-1]
+                v = v if self.momentums is not None and k in self.momentums else v[-1]
                 outs[k].append(v)
 
         for k, v in outs.items():
@@ -223,7 +222,4 @@ class BaseTracker(BaseModule, metaclass=ABCMeta):
                     align_corners=False)
             crop_imgs.append(crop_img)
 
-        if len(crop_imgs) > 0:
-            return torch.cat(crop_imgs, dim=0)
-        else:
-            return img.new_zeros((0, ))
+        return torch.cat(crop_imgs, dim=0) if crop_imgs else img.new_zeros((0, ))

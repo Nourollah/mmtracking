@@ -100,45 +100,43 @@ class TridentSampling(object):
             List: the indexes of template and search images.
         """
         extra_template_inds = [None]
+        if not self.is_video_data:
+            return [0] * (self.num_template_frames + self.num_search_frames)
+
+
         sampling_count = 0
-        if self.is_video_data:
-            while None in extra_template_inds:
-                # first randomly sample two frames from a video
-                template_ind, search_ind = self.random_sample_inds(
-                    video_visibility, num_samples=2)
+        while None in extra_template_inds:
+            # first randomly sample two frames from a video
+            template_ind, search_ind = self.random_sample_inds(
+                video_visibility, num_samples=2)
 
-                # then sample the extra templates
-                extra_template_inds = []
-                for max_frame_range in self.max_frame_range:
+            # then sample the extra templates
+            extra_template_inds = []
+            for max_frame_range in self.max_frame_range:
                     # make the sampling range is near the template_ind
-                    if template_ind >= search_ind:
-                        min_ind, max_ind = search_ind, \
-                            search_ind + max_frame_range
-                    else:
-                        min_ind, max_ind = search_ind - max_frame_range, \
-                            search_ind
-                    extra_template_index = self.random_sample_inds(
-                        video_visibility,
-                        num_samples=1,
-                        frame_range=[min_ind, max_ind],
-                        allow_invisible=False)[0]
+                min_ind, max_ind = (
+                    (search_ind, search_ind + max_frame_range)
+                    if template_ind >= search_ind
+                    else (search_ind - max_frame_range, search_ind)
+                )
 
-                    extra_template_inds.append(extra_template_index)
+                extra_template_index = self.random_sample_inds(
+                    video_visibility,
+                    num_samples=1,
+                    frame_range=[min_ind, max_ind],
+                    allow_invisible=False)[0]
 
-                sampling_count += 1
-                if sampling_count > 100:
-                    print_log('-------Not sampling extra valid templates'
-                              'successfully. Stop sampling and copy the'
-                              'first template as extra templates-------')
-                    extra_template_inds = [template_ind] * len(
-                        self.max_frame_range)
+                extra_template_inds.append(extra_template_index)
 
-            sampled_inds = [template_ind] + extra_template_inds + [search_ind]
-        else:
-            sampled_inds = [0] * (
-                self.num_template_frames + self.num_search_frames)
+            sampling_count += 1
+            if sampling_count > 100:
+                print_log('-------Not sampling extra valid templates'
+                          'successfully. Stop sampling and copy the'
+                          'first template as extra templates-------')
+                extra_template_inds = [template_ind] * len(
+                    self.max_frame_range)
 
-        return sampled_inds
+        return [template_ind] + extra_template_inds + [search_ind]
 
     def prepare_data(self, video_info, sampled_inds, with_label=False):
         """Prepare sampled training data according to the sampled index.
@@ -154,12 +152,11 @@ class TridentSampling(object):
         Returns:
             List[dict]: contains the information of sampled data.
         """
-        extra_infos = {}
-        for key, info in video_info.items():
-            if key in [
-                    'bbox_fields', 'mask_fields', 'seg_fields', 'img_prefix'
-            ]:
-                extra_infos[key] = info
+        extra_infos = {
+            key: info
+            for key, info in video_info.items()
+            if key in ['bbox_fields', 'mask_fields', 'seg_fields', 'img_prefix']
+        }
 
         bboxes = video_info['bboxes']
         results = []
@@ -241,7 +238,7 @@ class TridentSampling(object):
             self.num_search_frames + self.num_template_frames) and len(
                 video_info['visible']) >= self.min_num_frames
         enough_visible_frames = enough_visible_frames or not \
-            self.is_video_data
+                self.is_video_data
 
         if not enough_visible_frames:
             return None
@@ -252,13 +249,11 @@ class TridentSampling(object):
         if not video_info['bboxes_isvalid'][sampled_inds].all():
             return None
 
-        if not self.train_cls_head:
-            results = self.prepare_data(video_info, sampled_inds)
-        else:
-            results = self.prepare_cls_data(video_info, video_info_another,
-                                            sampled_inds)
-
-        return results
+        return (
+            self.prepare_cls_data(video_info, video_info_another, sampled_inds)
+            if self.train_cls_head
+            else self.prepare_data(video_info, sampled_inds)
+        )
 
 
 @PIPELINES.register_module()
@@ -307,12 +302,11 @@ class PairSampling(object):
         Returns:
             List[dict]: contains the information of sampled data.
         """
-        extra_infos = {}
-        for key, info in video_info.items():
-            if key in [
-                    'bbox_fields', 'mask_fields', 'seg_fields', 'img_prefix'
-            ]:
-                extra_infos[key] = info
+        extra_infos = {
+            key: info
+            for key, info in video_info.items()
+            if key in ['bbox_fields', 'mask_fields', 'seg_fields', 'img_prefix']
+        }
 
         bboxes = video_info['bboxes']
         results = []
@@ -348,12 +342,13 @@ class PairSampling(object):
                 left_ind = max(template_frame_ind + self.frame_range[0], 0)
                 right_ind = min(template_frame_ind + self.frame_range[1],
                                 len(video_info['frame_ids']))
-                if self.filter_template_img:
-                    ref_frames_inds = list(
-                        range(left_ind, template_frame_ind)) + list(
-                            range(template_frame_ind + 1, right_ind))
-                else:
-                    ref_frames_inds = list(range(left_ind, right_ind))
+                ref_frames_inds = (
+                    list(range(left_ind, template_frame_ind))
+                    + list(range(template_frame_ind + 1, right_ind))
+                    if self.filter_template_img
+                    else list(range(left_ind, right_ind))
+                )
+
                 search_frame_ind = np.random.choice(ref_frames_inds)
                 results = self.prepare_data(
                     video_info, [template_frame_ind, search_frame_ind],
@@ -367,16 +362,15 @@ class PairSampling(object):
                     self.prepare_data(
                         video_info_another, [search_frame_ind],
                         is_positive_pairs=False))
+        elif self.pos_prob > np.random.random():
+            results = self.prepare_data(
+                video_info, [0, 0], is_positive_pairs=True)
         else:
-            if self.pos_prob > np.random.random():
-                results = self.prepare_data(
-                    video_info, [0, 0], is_positive_pairs=True)
-            else:
-                results = self.prepare_data(
-                    video_info, [0], is_positive_pairs=False)
-                results.extend(
-                    self.prepare_data(
-                        video_info_another, [0], is_positive_pairs=False))
+            results = self.prepare_data(
+                video_info, [0], is_positive_pairs=False)
+            results.extend(
+                self.prepare_data(
+                    video_info_another, [0], is_positive_pairs=False))
         return results
 
 
@@ -425,8 +419,7 @@ class MatchInstances(object):
         nomatch = (match_indices == -1).all()
         if self.skip_nomatch and nomatch:
             return None
-        else:
-            results[0]['gt_match_indices'] = match_indices.copy()
-            results[1]['gt_match_indices'] = ref_match_indices.copy()
+        results[0]['gt_match_indices'] = match_indices.copy()
+        results[1]['gt_match_indices'] = ref_match_indices.copy()
 
         return results

@@ -29,11 +29,11 @@ class ImagenetVIDDataset(CocoVideoDataset):
         Returns:
             list[dict]: Annotation information from COCO/COCOVID api.
         """
-        if self.load_as_video:
-            data_infos = self.load_video_anns(ann_file)
-        else:
-            data_infos = self.load_image_anns(ann_file)
-        return data_infos
+        return (
+            self.load_video_anns(ann_file)
+            if self.load_as_video
+            else self.load_image_anns(ann_file)
+        )
 
     def load_image_anns(self, ann_file):
         """Load annotations from COCO style annotation file.
@@ -82,7 +82,7 @@ class ImagenetVIDDataset(CocoVideoDataset):
                 info['filename'] = info['file_name']
                 if self.test_mode:
                     assert not info['is_vid_train_frame'], \
-                        'is_vid_train_frame must be False in testing'
+                            'is_vid_train_frame must be False in testing'
                     self.img_ids.append(img_id)
                     data_infos.append(info)
                 elif info['is_vid_train_frame']:

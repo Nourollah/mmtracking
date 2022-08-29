@@ -145,8 +145,7 @@ class RoIEmbedHead(BaseModule):
         else:
             x = x.flatten(1)
 
-        x_split = torch.split(x, num_x_per_img, dim=0)
-        return x_split
+        return torch.split(x, num_x_per_img, dim=0)
 
     @auto_fp16(apply_to=('x', 'ref_x'))
     def forward(self, x, ref_x, num_x_per_img, num_x_per_ref_img):

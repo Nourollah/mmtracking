@@ -29,13 +29,16 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    train=dict(ann_file=data_root + 'annotations/train_cocoformat.json'),
+    train=dict(ann_file=f'{data_root}annotations/train_cocoformat.json'),
     val=dict(
-        ann_file=data_root + 'annotations/train_cocoformat.json',
-        detection_file=data_root + 'annotations/train_detections.pkl',
-        pipeline=test_pipeline),
+        ann_file=f'{data_root}annotations/train_cocoformat.json',
+        detection_file=f'{data_root}annotations/train_detections.pkl',
+        pipeline=test_pipeline,
+    ),
     test=dict(
-        ann_file=data_root + f'annotations/{test_set}_cocoformat.json',
+        ann_file=f'{data_root}annotations/{test_set}_cocoformat.json',
         img_prefix=data_root + test_set,
-        detection_file=data_root + f'annotations/{test_set}_detections.pkl',
-        pipeline=test_pipeline))
+        detection_file=f'{data_root}annotations/{test_set}_detections.pkl',
+        pipeline=test_pipeline,
+    ),
+)

@@ -62,26 +62,25 @@ class GOT10kDataset(BaseSOTDataset):
 
     def get_visibility_from_video(self, video_ind):
         """Get the visible information of instance in a video."""
-        if not self.test_mode:
-            absense_info_path = osp.join(
-                self.img_prefix, self.data_infos[video_ind]['video_path'],
-                'absence.label')
-            cover_info_path = osp.join(
-                self.img_prefix, self.data_infos[video_ind]['video_path'],
-                'cover.label')
-            absense_info = self.loadtxt(absense_info_path, dtype=bool)
-            # The values of key 'cover' are
-            # int numbers in range [0,8], which correspond to
-            # ranges of object visible ratios: 0%, (0%, 15%],
-            # (15%~30%], (30%, 45%], (45%, 60%],(60%, 75%],
-            # (75%, 90%], (90%, 100%) and 100% respectively
-            cover_info = self.loadtxt(cover_info_path, dtype=int)
-            visible = ~absense_info & (cover_info > 0)
-            visible_ratio = cover_info / 8.
-            return dict(visible=visible, visible_ratio=visible_ratio)
-        else:
+        if self.test_mode:
             return super(GOT10kDataset,
                          self).get_visibility_from_video(video_ind)
+        absense_info_path = osp.join(
+            self.img_prefix, self.data_infos[video_ind]['video_path'],
+            'absence.label')
+        cover_info_path = osp.join(
+            self.img_prefix, self.data_infos[video_ind]['video_path'],
+            'cover.label')
+        absense_info = self.loadtxt(absense_info_path, dtype=bool)
+        # The values of key 'cover' are
+        # int numbers in range [0,8], which correspond to
+        # ranges of object visible ratios: 0%, (0%, 15%],
+        # (15%~30%], (30%, 45%], (45%, 60%],(60%, 75%],
+        # (75%, 90%], (90%, 100%) and 100% respectively
+        cover_info = self.loadtxt(cover_info_path, dtype=int)
+        visible = ~absense_info & (cover_info > 0)
+        visible_ratio = cover_info / 8.
+        return dict(visible=visible, visible_ratio=visible_ratio)
 
     def prepare_test_data(self, video_ind, frame_ind):
         """Get testing data of one frame. We parse one video, get one frame
@@ -145,10 +144,8 @@ class GOT10kDataset(BaseSOTDataset):
             video_resfiles_path = osp.join(resfile_path, video_name)
             if not osp.isdir(video_resfiles_path):
                 os.makedirs(video_resfiles_path, exist_ok=True)
-            video_bbox_txt = osp.join(video_resfiles_path,
-                                      '{}_001.txt'.format(video_name))
-            video_time_txt = osp.join(video_resfiles_path,
-                                      '{}_time.txt'.format(video_name))
+            video_bbox_txt = osp.join(video_resfiles_path, f'{video_name}_001.txt')
+            video_time_txt = osp.join(video_resfiles_path, f'{video_name}_time.txt')
             with open(video_bbox_txt,
                       'w') as f_bbox, open(video_time_txt, 'w') as f_time:
 

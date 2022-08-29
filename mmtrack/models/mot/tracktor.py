@@ -28,15 +28,13 @@ class Tracktor(BaseMultiObjectTracker):
             warnings.warn('DeprecationWarning: pretrains is deprecated, '
                           'please use "init_cfg" instead')
             if detector:
-                detector_pretrain = pretrains.get('detector', None)
-                if detector_pretrain:
+                if detector_pretrain := pretrains.get('detector', None):
                     detector.init_cfg = dict(
                         type='Pretrained', checkpoint=detector_pretrain)
                 else:
                     detector.init_cfg = None
             if reid:
-                reid_pretrain = pretrains.get('reid', None)
-                if reid_pretrain:
+                if reid_pretrain := pretrains.get('reid', None):
                     reid.init_cfg = dict(
                         type='Pretrained', checkpoint=reid_pretrain)
                 else:

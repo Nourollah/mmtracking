@@ -64,15 +64,20 @@ train_pipeline = [
 
 # dataset settings
 data = dict(
-    train=dict(dataset_cfgs=[
-        dict(
-            type='GOT10kDataset',
-            ann_file=data_root + 'got10k/annotations/got10k_train_infos.txt',
-            img_prefix=data_root + 'got10k',
-            pipeline=train_pipeline,
-            split='train',
-            test_mode=False)
-    ]))
+    train=dict(
+        dataset_cfgs=[
+            dict(
+                type='GOT10kDataset',
+                ann_file=f'{data_root}got10k/annotations/got10k_train_infos.txt',
+                img_prefix=f'{data_root}got10k',
+                pipeline=train_pipeline,
+                split='train',
+                test_mode=False,
+            )
+        ]
+    )
+)
+
 
 # learning policy
 lr_config = dict(policy='step', step=[40])

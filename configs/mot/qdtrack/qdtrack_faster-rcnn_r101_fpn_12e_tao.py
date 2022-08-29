@@ -7,13 +7,18 @@ data = dict(
     workers_per_gpu=2,
     train=dict(
         dataset=dict(
-            classes=data_root + 'annotations/tao_classes.txt',
-            ann_file=data_root + 'annotations/train_482_classes.json',
-            img_prefix=data_root + 'train/',
+            classes=f'{data_root}annotations/tao_classes.txt',
+            ann_file=f'{data_root}annotations/train_482_classes.json',
+            img_prefix=f'{data_root}train/',
             load_as_video=True,
             key_img_sampler=dict(interval=1),
             ref_img_sampler=dict(
-                num_ref_imgs=1, frame_range=[-1, 1], method='uniform'))))
+                num_ref_imgs=1, frame_range=[-1, 1], method='uniform'
+            ),
+        )
+    ),
+)
+
 # learning policy
 lr_config = dict(step=[8, 11])
 total_epochs = 12

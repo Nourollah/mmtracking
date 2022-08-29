@@ -117,45 +117,53 @@ data = dict(
         dataset_cfgs=[
             dict(
                 type='SOTImageNetVIDDataset',
-                ann_file=data_root +
-                'ILSVRC/annotations/imagenet_vid_train.json',
-                img_prefix=data_root + 'ILSVRC/Data/VID',
+                ann_file=data_root
+                + 'ILSVRC/annotations/imagenet_vid_train.json',
+                img_prefix=f'{data_root}ILSVRC/Data/VID',
                 pipeline=train_pipeline,
                 split='train',
-                test_mode=False),
+                test_mode=False,
+            ),
             dict(
                 type='SOTCocoDataset',
-                ann_file=data_root +
-                'coco/annotations/instances_train2017.json',
-                img_prefix=data_root + 'coco/train2017',
+                ann_file=data_root
+                + 'coco/annotations/instances_train2017.json',
+                img_prefix=f'{data_root}coco/train2017',
                 pipeline=train_pipeline,
                 split='train',
-                test_mode=False),
+                test_mode=False,
+            ),
             dict(
                 type='SOTCocoDataset',
-                ann_file=data_root +
-                'ILSVRC/annotations/imagenet_det_30plus1cls.json',
-                img_prefix=data_root + 'ILSVRC/Data/DET',
+                ann_file=data_root
+                + 'ILSVRC/annotations/imagenet_det_30plus1cls.json',
+                img_prefix=f'{data_root}ILSVRC/Data/DET',
                 pipeline=train_pipeline,
                 split='train',
-                test_mode=False)
-        ]),
+                test_mode=False,
+            ),
+        ],
+    ),
     val=dict(
         type='LaSOTDataset',
-        ann_file=data_root + 'lasot/annotations/lasot_test_infos.txt',
-        img_prefix=data_root + 'lasot/LaSOTBenchmark',
+        ann_file=f'{data_root}lasot/annotations/lasot_test_infos.txt',
+        img_prefix=f'{data_root}lasot/LaSOTBenchmark',
         pipeline=test_pipeline,
         split='test',
         test_mode=True,
-        only_eval_visible=True),
+        only_eval_visible=True,
+    ),
     test=dict(
         type='LaSOTDataset',
-        ann_file=data_root + 'lasot/annotations/lasot_test_infos.txt',
-        img_prefix=data_root + 'lasot/LaSOTBenchmark',
+        ann_file=f'{data_root}lasot/annotations/lasot_test_infos.txt',
+        img_prefix=f'{data_root}lasot/LaSOTBenchmark',
         pipeline=test_pipeline,
         split='test',
         test_mode=True,
-        only_eval_visible=True))
+        only_eval_visible=True,
+    ),
+)
+
 # optimizer
 optimizer = dict(
     type='SGD',

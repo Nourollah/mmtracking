@@ -100,9 +100,7 @@ class VOTDataset(BaseSOTDataset):
         visible_info = self.get_visibility_from_video(video_ind)
         # bboxes in VOT datasets are all valid
         bboxes_isvalid = np.array([True] * len(bboxes), dtype=np.bool_)
-        ann_infos = dict(
-            bboxes=bboxes, bboxes_isvalid=bboxes_isvalid, **visible_info)
-        return ann_infos
+        return dict(bboxes=bboxes, bboxes_isvalid=bboxes_isvalid, **visible_info)
 
     # TODO support multirun test
     def evaluate(self, results, metric=['track'], logger=None, interval=None):
@@ -140,7 +138,7 @@ class VOTDataset(BaseSOTDataset):
             annotations.append(bboxes)
 
         # tracking_bboxes converting code
-        eval_results = dict()
+        eval_results = {}
         if 'track' in metrics:
             assert len(self) == len(
                 results['track_bboxes']
@@ -178,14 +176,14 @@ class VOTDataset(BaseSOTDataset):
                 videos_wh.append((img.shape[1], img.shape[0]))
 
             interval = self.INTERVAL[self.dataset_type] if interval is None \
-                else interval
+                    else interval
 
             eao_score = eval_sot_eao(
                 results=track_bboxes,
                 annotations=annotations,
                 videos_wh=videos_wh,
                 interval=interval)
-            eval_results.update(eao_score)
+            eval_results |= eao_score
 
             accuracy_robustness = eval_sot_accuracy_robustness(
                 results=track_bboxes,

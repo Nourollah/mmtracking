@@ -19,14 +19,13 @@ def imrenormalize(img, img_norm_cfg, new_img_norm_cfg):
         Tensor | ndarray: Output image with the same type and shape of
         the input.
     """
-    if isinstance(img, torch.Tensor):
-        assert img.ndim == 4 and img.shape[0] == 1
-        new_img = img.squeeze(0).cpu().numpy().transpose(1, 2, 0)
-        new_img = _imrenormalize(new_img, img_norm_cfg, new_img_norm_cfg)
-        new_img = new_img.transpose(2, 0, 1)[None]
-        return torch.from_numpy(new_img).to(img)
-    else:
+    if not isinstance(img, torch.Tensor):
         return _imrenormalize(img, img_norm_cfg, new_img_norm_cfg)
+    assert img.ndim == 4 and img.shape[0] == 1
+    new_img = img.squeeze(0).cpu().numpy().transpose(1, 2, 0)
+    new_img = _imrenormalize(new_img, img_norm_cfg, new_img_norm_cfg)
+    new_img = new_img.transpose(2, 0, 1)[None]
+    return torch.from_numpy(new_img).to(img)
 
 
 def _imrenormalize(img, img_norm_cfg, new_img_norm_cfg):
@@ -34,14 +33,14 @@ def _imrenormalize(img, img_norm_cfg, new_img_norm_cfg):
     img_norm_cfg = img_norm_cfg.copy()
     new_img_norm_cfg = new_img_norm_cfg.copy()
     for k, v in img_norm_cfg.items():
-        if (k == 'mean' or k == 'std') and not isinstance(v, np.ndarray):
+        if k in ['mean', 'std'] and not isinstance(v, np.ndarray):
             img_norm_cfg[k] = np.array(v, dtype=img.dtype)
     # reverse cfg
     if 'to_rgb' in img_norm_cfg:
         img_norm_cfg['to_bgr'] = img_norm_cfg['to_rgb']
         img_norm_cfg.pop('to_rgb')
     for k, v in new_img_norm_cfg.items():
-        if (k == 'mean' or k == 'std') and not isinstance(v, np.ndarray):
+        if k in ['mean', 'std'] and not isinstance(v, np.ndarray):
             new_img_norm_cfg[k] = np.array(v, dtype=img.dtype)
     img = mmcv.imdenormalize(img, **img_norm_cfg)
     img = mmcv.imnormalize(img, **new_img_norm_cfg)
@@ -76,7 +75,7 @@ def outs2results(bboxes=None,
     assert labels is not None
     assert num_classes is not None
 
-    results = dict()
+    results = {}
 
     if ids is not None:
         valid_inds = ids > -1
@@ -87,10 +86,7 @@ def outs2results(bboxes=None,
         if ids is not None:
             bboxes = bboxes[valid_inds]
             if bboxes.shape[0] == 0:
-                bbox_results = [
-                    np.zeros((0, 6), dtype=np.float32)
-                    for i in range(num_classes)
-                ]
+                bbox_results = [np.zeros((0, 6), dtype=np.float32) for _ in range(num_classes)]
             else:
                 if isinstance(bboxes, torch.Tensor):
                     bboxes = bboxes.cpu().numpy()
@@ -141,7 +137,7 @@ def results2outs(bbox_results=None,
         - masks (np.ndarray): shape (n, h, w)
         - ids (np.ndarray): shape (n, )
     """
-    outputs = dict()
+    outputs = {}
 
     if bbox_results is not None:
         labels = []

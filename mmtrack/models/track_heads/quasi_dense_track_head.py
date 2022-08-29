@@ -111,9 +111,7 @@ class QuasiDenseTrackHead(RoITrackHead):
         asso_targets = self.embed_head.get_targets(gt_match_indices,
                                                    key_sampling_results,
                                                    ref_sampling_results)
-        loss_track = self.embed_head.loss(*match_feats, *asso_targets)
-
-        return loss_track
+        return self.embed_head.loss(*match_feats, *asso_targets)
 
     def extract_bbox_feats(self, x, bboxes):
         """Extract roi features."""

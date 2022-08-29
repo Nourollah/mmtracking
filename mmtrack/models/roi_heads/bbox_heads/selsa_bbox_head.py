@@ -19,7 +19,7 @@ class SelsaBBoxHead(ConvFCBBoxHead):
     def __init__(self, aggregator, *args, **kwargs):
         super(SelsaBBoxHead, self).__init__(*args, **kwargs)
         self.aggregator = nn.ModuleList()
-        for i in range(self.num_shared_fcs):
+        for _ in range(self.num_shared_fcs):
             self.aggregator.append(build_aggregator(aggregator))
         self.inplace_false_relu = nn.ReLU(inplace=False)
 

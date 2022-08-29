@@ -32,7 +32,7 @@ def bbox2region(bbox):
     elif len(bbox) == 4:
         return Rectangle(bbox[0], bbox[1], bbox[2], bbox[3])
     elif len(bbox) % 2 == 0 and len(bbox) > 4:
-        return Polygon([(x_, y_) for x_, y_ in zip(bbox[::2], bbox[1::2])])
+        return Polygon(list(zip(bbox[::2], bbox[1::2])))
     else:
         raise NotImplementedError(
             f'The length of bbox is {len(bbox)}, which is not supported')
@@ -49,10 +49,7 @@ def trajectory2region(trajectory):
         List: contains the Region Class object of each frame in a
             trajectory.
     """
-    traj_region = []
-    for bbox in trajectory:
-        traj_region.append(bbox2region(bbox))
-    return traj_region
+    return [bbox2region(bbox) for bbox in trajectory]
 
 
 def locate_failures_inits(trajectory):
@@ -85,11 +82,7 @@ def count_failures(trajectory):
     Returns:
         List: the number of failed frame in a trajectory.
     """
-    num_fails = 0
-    for bbox in trajectory:
-        if len(bbox) == 1 and bbox[0] == 2.:
-            num_fails += 1
-    return num_fails
+    return sum(len(bbox) == 1 and bbox[0] == 2. for bbox in trajectory)
 
 
 def calc_accuracy(gt_trajectory,
@@ -205,7 +198,7 @@ def calc_eao_curve(overlaps, successes):
         ndarray: The N-th element in ndarray denotes the average overlaps from
             1 to N in all fragments.
     """
-    max_length = max([len(_) for _ in overlaps])
+    max_length = max(len(_) for _ in overlaps)
     total_runs = len(overlaps)
 
     overlaps_array = np.zeros((total_runs, max_length), dtype=np.float32)
@@ -300,5 +293,4 @@ def eval_sot_eao(results, annotations, interval=[100, 356], videos_wh=None):
 
     eao_curve = calc_eao_curve(all_overlaps, all_successes)
     eao_score = np.mean(eao_curve[interval[0]:interval[1] + 1])
-    eao = dict(eao=eao_score)
-    return eao
+    return dict(eao=eao_score)

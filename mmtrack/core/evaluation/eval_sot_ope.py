@@ -119,6 +119,6 @@ def eval_sot_ope(results, annotations, visible_infos=None):
     success = np.mean(success_results) * 100
     precision = np.mean(precision_results, axis=0)[20] * 100
     norm_precision = np.mean(norm_precision_results, axis=0)[20] * 100
-    eval_results = dict(
-        success=success, norm_precision=norm_precision, precision=precision)
-    return eval_results
+    return dict(
+        success=success, norm_precision=norm_precision, precision=precision
+    )

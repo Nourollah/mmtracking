@@ -76,13 +76,12 @@ def main():
         if isinstance(img, str):
             img = osp.join(args.input, img)
         result = inference_mot(model, img, frame_id=i)
-        if args.output is not None:
-            if IN_VIDEO or OUT_VIDEO:
-                out_file = osp.join(out_path, f'{i:06d}.jpg')
-            else:
-                out_file = osp.join(out_path, img.rsplit(os.sep, 1)[-1])
-        else:
+        if args.output is None:
             out_file = None
+        elif IN_VIDEO or OUT_VIDEO:
+            out_file = osp.join(out_path, f'{i:06d}.jpg')
+        else:
+            out_file = osp.join(out_path, img.rsplit(os.sep, 1)[-1])
         model.show_result(
             img,
             result,

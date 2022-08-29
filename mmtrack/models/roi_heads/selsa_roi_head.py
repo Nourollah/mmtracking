@@ -58,13 +58,13 @@ class SelsaRoIHead(StandardRoIHead):
                     feats=[lvl_feat[i][None] for lvl_feat in x])
                 sampling_results.append(sampling_result)
 
-        losses = dict()
+        losses = {}
         # bbox head forward and loss
         if self.with_bbox:
             bbox_results = self._bbox_forward_train(x, ref_x, sampling_results,
                                                     ref_proposal_list,
                                                     gt_bboxes, gt_labels)
-            losses.update(bbox_results['loss_bbox'])
+            losses |= bbox_results['loss_bbox']
 
         # mask head forward and loss
         if self.with_mask:
@@ -92,9 +92,9 @@ class SelsaRoIHead(StandardRoIHead):
             ref_bbox_feats = self.shared_head(ref_bbox_feats)
         cls_score, bbox_pred = self.bbox_head(bbox_feats, ref_bbox_feats)
 
-        bbox_results = dict(
-            cls_score=cls_score, bbox_pred=bbox_pred, bbox_feats=bbox_feats)
-        return bbox_results
+        return dict(
+            cls_score=cls_score, bbox_pred=bbox_pred, bbox_feats=bbox_feats
+        )
 
     def _bbox_forward_train(self, x, ref_x, sampling_results,
                             ref_proposal_list, gt_bboxes, gt_labels):
@@ -139,10 +139,9 @@ class SelsaRoIHead(StandardRoIHead):
 
         if not self.with_mask:
             return bbox_results
-        else:
-            mask_results = self.simple_test_mask(
-                x, img_metas, det_bboxes, det_labels, rescale=rescale)
-            return list(zip(bbox_results, mask_results))
+        mask_results = self.simple_test_mask(
+            x, img_metas, det_bboxes, det_labels, rescale=rescale)
+        return list(zip(bbox_results, mask_results))
 
     def simple_test_bboxes(self,
                            x,

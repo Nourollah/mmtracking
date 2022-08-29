@@ -190,19 +190,18 @@ class TemporalRoIAlign(SingleRoIExtractor):
             # Directly return roi features for proposals of reference images,
             # when there is no ref_feats
             return roi_feats
-        else:
-            # We only use the last level of reference feature map to perform
-            # Most Similar RoI Align.
-            ref_roi_feats = self.most_similar_roi_align(
-                roi_feats, ref_feats[-1])
+        # We only use the last level of reference feature map to perform
+        # Most Similar RoI Align.
+        ref_roi_feats = self.most_similar_roi_align(
+            roi_feats, ref_feats[-1])
 
-            roi_feats = roi_feats.unsqueeze(0)
-            if self.num_temporal_attention_blocks > 0:
-                temporal_roi_feats = \
+        roi_feats = roi_feats.unsqueeze(0)
+        if self.num_temporal_attention_blocks > 0:
+            temporal_roi_feats = \
                     self.temporal_attentional_feature_aggregation(
-                        roi_feats, ref_roi_feats)
-            else:
-                temporal_roi_feats = torch.cat((roi_feats, ref_roi_feats),
-                                               dim=0)
-                temporal_roi_feats = temporal_roi_feats.mean(dim=0)
-            return temporal_roi_feats
+                    roi_feats, ref_roi_feats)
+        else:
+            temporal_roi_feats = torch.cat((roi_feats, ref_roi_feats),
+                                           dim=0)
+            temporal_roi_feats = temporal_roi_feats.mean(dim=0)
+        return temporal_roi_feats

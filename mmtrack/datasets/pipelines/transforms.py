@@ -69,8 +69,7 @@ class SeqCropLikeSiamFC(object):
             bbox[0] + 0.5 * x_size, bbox[1] + 0.5 * x_size
         ])
 
-        x_crop_img = crop_image(image, x_bbox, crop_size, padding)
-        return x_crop_img
+        return crop_image(image, x_bbox, crop_size, padding)
 
     def generate_box(self, image, gt_bbox, context_amount, exemplar_size):
         """Generate box based on cropped image.
@@ -95,11 +94,10 @@ class SeqCropLikeSiamFC(object):
         w = w * z_scale_factor
         h = h * z_scale_factor
         cx, cy = img_w // 2, img_h // 2
-        bbox = np.array(
+        return np.array(
             [cx - 0.5 * w, cy - 0.5 * h, cx + 0.5 * w, cy + 0.5 * h],
-            dtype=np.float32)
-
-        return bbox
+            dtype=np.float32,
+        )
 
     def __call__(self, results):
         """Call function.
@@ -239,12 +237,12 @@ class SeqCropLikeStark(object):
             ndarray: generated box of shape (4, ) in [x1, y1, x2, y2] format.
         """
         assert output_size > 0
-        bbox_gt_center = (bbox_gt[0:2] + bbox_gt[2:4]) * 0.5
-        bbox_cropped_center = (bbox_cropped[0:2] + bbox_cropped[2:4]) * 0.5
+        bbox_gt_center = (bbox_gt[:2] + bbox_gt[2:4]) * 0.5
+        bbox_cropped_center = (bbox_cropped[:2] + bbox_cropped[2:4]) * 0.5
 
         bbox_out_center = (output_size - 1) / 2. + (
             bbox_gt_center - bbox_cropped_center) * resize_factor
-        bbox_out_wh = (bbox_gt[2:4] - bbox_gt[0:2]) * resize_factor
+        bbox_out_wh = (bbox_gt[2:4] - bbox_gt[:2]) * resize_factor
         bbox_out = np.concatenate((bbox_out_center - 0.5 * bbox_out_wh,
                                    bbox_out_center + 0.5 * bbox_out_wh),
                                   axis=-1)
@@ -344,8 +342,10 @@ class SeqBboxJitter(object):
 
             max_offset = np.sqrt(
                 jittered_wh.prod()) * self.center_jitter_factor[i]
-            jittered_center = gt_bbox_cxcywh[0:2] + max_offset * (
-                np.random.rand(2) - 0.5)
+            jittered_center = gt_bbox_cxcywh[:2] + max_offset * (
+                np.random.rand(2) - 0.5
+            )
+
 
             jittered_bboxes = np.concatenate(
                 (jittered_center - 0.5 * jittered_wh,
@@ -859,10 +859,7 @@ class SeqRandomCrop(object):
 
         for key in results.get('img_fields', ['img']):
             img = results[key]
-            if offsets is not None:
-                offset_h, offset_w = offsets
-            else:
-                offset_h, offset_w = self.get_offsets(img)
+            offset_h, offset_w = offsets if offsets is not None else self.get_offsets(img)
             results['img_info']['crop_offsets'] = (offset_h, offset_w)
             crop_y1, crop_y2 = offset_h, offset_h + self.crop_size[0]
             crop_x1, crop_x2 = offset_w, offset_w + self.crop_size[1]
@@ -919,11 +916,7 @@ class SeqRandomCrop(object):
             dict: Randomly cropped results, 'img_shape' key in result dict is
             updated according to crop size.
         """
-        if self.share_params:
-            offsets = self.get_offsets(results[0]['img'])
-        else:
-            offsets = None
-
+        offsets = self.get_offsets(results[0]['img']) if self.share_params else None
         outs = []
         for _results in results:
             _results = self.random_crop(_results, offsets)
@@ -970,13 +963,14 @@ class SeqPhotoMetricDistortion(object):
 
     def get_params(self):
         """Generate parameters."""
-        params = dict()
-        # delta
-        if np.random.randint(2):
-            params['delta'] = np.random.uniform(-self.brightness_delta,
-                                                self.brightness_delta)
-        else:
-            params['delta'] = None
+        params = {
+            'delta': np.random.uniform(
+                -self.brightness_delta, self.brightness_delta
+            )
+            if np.random.randint(2)
+            else None
+        }
+
         # mode
         mode = np.random.randint(2)
         params['contrast_first'] = True if mode == 1 else 0
@@ -1020,20 +1014,19 @@ class SeqPhotoMetricDistortion(object):
 
         if 'img_fields' in results:
             assert results['img_fields'] == ['img'], \
-                'Only single img_fields is allowed'
+                    'Only single img_fields is allowed'
         img = results['img']
         assert img.dtype == np.float32, \
-            'PhotoMetricDistortion needs the input image of dtype np.float32,'\
-            ' please set "to_float32=True" in "LoadImageFromFile" pipeline'
+                'PhotoMetricDistortion needs the input image of dtype np.float32,'\
+                ' please set "to_float32=True" in "LoadImageFromFile" pipeline'
         # random brightness
         if params['delta'] is not None:
             img += params['delta']
 
         # mode == 0 --> do random contrast first
         # mode == 1 --> do random contrast last
-        if params['contrast_first']:
-            if params['alpha'] is not None:
-                img *= params['alpha']
+        if params['contrast_first'] and params['alpha'] is not None:
+            img *= params['alpha']
 
         # convert color from BGR to HSV
         img = mmcv.bgr2hsv(img)
@@ -1052,9 +1045,8 @@ class SeqPhotoMetricDistortion(object):
         img = mmcv.hsv2bgr(img)
 
         # random contrast
-        if not params['contrast_first']:
-            if params['alpha'] is not None:
-                img *= params['alpha']
+        if not params['contrast_first'] and params['alpha'] is not None:
+            img *= params['alpha']
 
         # randomly swap channels
         if params['permutation'] is not None:
@@ -1072,11 +1064,7 @@ class SeqPhotoMetricDistortion(object):
         Returns:
             dict: Result dict with images distorted.
         """
-        if self.share_params:
-            params = self.get_params()
-        else:
-            params = None
-
+        params = self.get_params() if self.share_params else None
         outs = []
         for _results in results:
             _results = self.photo_metric_distortion(_results, params)

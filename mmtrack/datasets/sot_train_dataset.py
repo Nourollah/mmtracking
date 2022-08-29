@@ -39,7 +39,7 @@ class SOTTrainDataset(CocoVideoDataset):
         """Filter videos without ground truths."""
         valid_inds = []
         # obtain videos that contain annotation
-        ids_with_ann = set(_['video_id'] for _ in self.coco.anns.values())
+        ids_with_ann = {_['video_id'] for _ in self.coco.anns.values()}
 
         valid_vid_ids = []
         for i, vid_info in enumerate(self.data_infos):
@@ -139,8 +139,6 @@ class SOTTrainDataset(CocoVideoDataset):
         else:
             raise TypeError('The type of frame_range must be int or list.')
 
-        ref_image_ids = []
-        ref_instance_ids = []
         if pos_prob > np.random.random():
             index = snippet.index(image_id)
             left = max(index + frame_range[0], 0)
@@ -157,12 +155,11 @@ class SOTTrainDataset(CocoVideoDataset):
                  np.random.choice(range(len(self))))
             is_positive_pair = False
 
-        ref_image_ids.append(ref_image_id)
-        ref_instance_ids.append(ref_instance_id)
-
+        ref_image_ids = [ref_image_id]
+        ref_instance_ids = [ref_instance_id]
         if return_key_img:
             return [image_id, *ref_image_ids], \
-                [instance_id, *ref_instance_ids], is_positive_pair
+                    [instance_id, *ref_instance_ids], is_positive_pair
         else:
             return ref_image_ids, ref_instance_ids, is_positive_pair
 
@@ -233,6 +230,4 @@ class SOTTrainDataset(CocoVideoDataset):
             ann_info['bbox'][0] + ann_info['bbox'][2],
             ann_info['bbox'][1] + ann_info['bbox'][3]
         ]]
-        ann = dict(
-            bboxes=np.array(bbox, dtype=np.float32), labels=np.array([0]))
-        return ann
+        return dict(bboxes=np.array(bbox, dtype=np.float32), labels=np.array([0]))

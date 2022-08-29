@@ -30,7 +30,7 @@ class ConcatSameTypeFrames(object):
 
     def concat_one_mode_results(self, results):
         """Concatenate the results of the same mode."""
-        out = dict()
+        out = {}
         for i, result in enumerate(results):
             if 'img' in result:
                 img = result['img']
@@ -177,7 +177,7 @@ class MultiImagesToTensor(object):
             outs.append(_results)
 
         data = {}
-        data.update(outs[0])
+        data |= outs[0]
         if len(outs) == 2:
             for k, v in outs[1].items():
                 data[f'{self.ref_prefix}_{k}'] = v
@@ -250,7 +250,7 @@ class SeqDefaultFormatBundle(object):
             outs.append(_results)
 
         data = {}
-        data.update(outs[0])
+        data |= outs[0]
         for k, v in outs[1].items():
             data[f'{self.ref_prefix}_{k}'] = v
 
@@ -366,14 +366,13 @@ class VideoCollect(object):
 
     def _collect_meta_keys(self, results):
         """Collect `self.keys` and `self.meta_keys` from `results` (dict)."""
-        data = {}
         img_meta = {}
         for key in self.meta_keys:
             if key in results:
                 img_meta[key] = results[key]
             elif key in results['img_info']:
                 img_meta[key] = results['img_info'][key]
-        data['img_metas'] = img_meta
+        data = {'img_metas': img_meta}
         for key in self.keys:
             data[key] = results[key]
         return data
@@ -453,10 +452,7 @@ class ToList(object):
     """
 
     def __call__(self, results):
-        out = {}
-        for k, v in results.items():
-            out[k] = [v]
-        return out
+        return {k: [v] for k, v in results.items()}
 
 
 @PIPELINES.register_module()
@@ -484,11 +480,11 @@ class ReIDFormatBundle(object):
             dict: The result dict contains the data that is formatted with
             ReID bundle.
         """
-        inputs = dict()
+        inputs = {}
         if isinstance(results, list):
             assert len(results) > 1, \
-                'the \'results\' only have one item, ' \
-                'please directly use normal pipeline not \'Seq\' pipeline.'
+                    'the \'results\' only have one item, ' \
+                    'please directly use normal pipeline not \'Seq\' pipeline.'
             inputs['img'] = np.stack([_results['img'] for _results in results],
                                      axis=3)
             inputs['gt_label'] = np.stack(
@@ -498,9 +494,7 @@ class ReIDFormatBundle(object):
             inputs['gt_label'] = results['gt_label']
         else:
             raise TypeError('results must be a list or a dict.')
-        outs = self.reid_format_bundle(inputs)
-
-        return outs
+        return self.reid_format_bundle(inputs)
 
     def reid_format_bundle(self, results):
         """Transform and format gt_label fields in results.

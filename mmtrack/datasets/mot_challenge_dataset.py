@@ -51,26 +51,16 @@ class MOTChallengeDataset(CocoVideoDataset):
 
     def load_detections(self, detection_file=None):
         """Load public detections."""
-        # support detections in three formats
-        # 1. MMDet: [img_1, img_2, ...]
-        # 2. MMTrack: dict(det_bboxes=[img_1, img_2, ...])
-        # 3. Public:
-        #    1) dict(img1_name: [], img2_name: [], ...)
-        #    2) dict(det_bboxes=dict(img1_name: [], img2_name: [], ...))
-        # return as a dict or a list
-        if detection_file is not None:
-            detections = mmcv.load(detection_file)
-            if isinstance(detections, dict):
-                # results from mmtrack
-                if 'det_bboxes' in detections:
-                    detections = detections['det_bboxes']
-            else:
-                # results from mmdet
-                if not isinstance(detections, list):
-                    raise TypeError('detections must be a dict or a list.')
-            return detections
-        else:
+        if detection_file is None:
             return None
+        detections = mmcv.load(detection_file)
+        if isinstance(detections, dict):
+            # results from mmtrack
+            if 'det_bboxes' in detections:
+                detections = detections['det_bboxes']
+        elif not isinstance(detections, list):
+            raise TypeError('detections must be a dict or a list.')
+        return detections
 
     def prepare_results(self, img_info):
         """Prepare results for image (e.g. the annotation information, ...)."""
@@ -100,7 +90,7 @@ class MOTChallengeDataset(CocoVideoDataset):
         gt_bboxes_ignore = []
         gt_instance_ids = []
 
-        for i, ann in enumerate(ann_info):
+        for ann in ann_info:
             if (not self.test_mode) and (ann['visibility'] <
                                          self.visibility_thr):
                 continue
@@ -172,7 +162,7 @@ class MOTChallengeDataset(CocoVideoDataset):
                 import shutil
                 shutil.rmtree(resfile_path)
 
-        resfiles = dict()
+        resfiles = {}
         for metric in metrics:
             resfiles[metric] = osp.join(resfile_path, metric)
             os.makedirs(resfiles[metric], exist_ok=True)
@@ -222,7 +212,7 @@ class MOTChallengeDataset(CocoVideoDataset):
                     mot_frame_id = info['frame_id'] + 1
 
                 results_per_frame = \
-                    results_per_video[results_per_video[:, 0] == frame_id]
+                        results_per_video[results_per_video[:, 0] == frame_id]
                 for i in range(len(results_per_frame)):
                     _, track_id, x1, y1, x2, y2, conf = results_per_frame[i]
                     f.writelines(
@@ -278,53 +268,26 @@ class MOTChallengeDataset(CocoVideoDataset):
         benchmark, split_to_eval = self.get_benchmark_and_eval_split()
 
         dataset_config = dict(
-            # Location of GT data
             GT_FOLDER=gt_folder,
-            # Trackers location
             TRACKERS_FOLDER=tracker_folder,
-            # Where to save eval results
-            # (if None, same as TRACKERS_FOLDER)
             OUTPUT_FOLDER=None,
-            # Use 'track' as the default tracker
             TRACKERS_TO_EVAL=['track'],
-            # Option values: ['pedestrian']
             CLASSES_TO_EVAL=list(self.CLASSES),
-            # Option Values: 'MOT17', 'MOT16', 'MOT20', 'MOT15'
             BENCHMARK=benchmark,
-            # Option Values: 'train', 'test'
             SPLIT_TO_EVAL=split_to_eval,
-            # Whether tracker input files are zipped
             INPUT_AS_ZIP=False,
-            # Whether to print current config
             PRINT_CONFIG=True,
-            # Whether to perform preprocessing
-            # (never done for MOT15)
-            DO_PREPROC=False if 'MOT15' in self.img_prefix else True,
-            # Tracker files are in
-            # TRACKER_FOLDER/tracker_name/TRACKER_SUB_FOLDER
+            DO_PREPROC='MOT15' not in self.img_prefix,
             TRACKER_SUB_FOLDER='',
-            # Output files are saved in
-            # OUTPUT_FOLDER/tracker_name/OUTPUT_SUB_FOLDER
             OUTPUT_SUB_FOLDER='',
-            # Names of trackers to display
-            # (if None: TRACKERS_TO_EVAL)
             TRACKER_DISPLAY_NAMES=None,
-            # Where seqmaps are found
-            # (if None: GT_FOLDER/seqmaps)
             SEQMAP_FOLDER=None,
-            # Directly specify seqmap file
-            # (if none use seqmap_folder/benchmark-split_to_eval)
             SEQMAP_FILE=seqmap,
-            # If not None, specify sequences to eval
-            # and their number of timesteps
             SEQ_INFO=None,
-            # '{gt_folder}/{seq}/gt/gt.txt'
             GT_LOC_FORMAT='{gt_folder}/{seq}/gt/gt.txt',
-            # If False, data is in GT_FOLDER/BENCHMARK-SPLIT_TO_EVAL/ and in
-            # TRACKERS_FOLDER/BENCHMARK-SPLIT_TO_EVAL/tracker/
-            # If True, the middle 'benchmark-split' folder is skipped for both.
             SKIP_SPLIT_FOL=True,
         )
+
 
         if 'half-train' in self.ann_file:
             dataset_config[

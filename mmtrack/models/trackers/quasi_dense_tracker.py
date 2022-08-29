@@ -65,13 +65,13 @@ class QuasiDenseTracker(BaseTracker):
         self.match_metric = match_metric
 
         self.num_tracks = 0
-        self.tracks = dict()
+        self.tracks = {}
         self.backdrops = []
 
     def reset(self):
         """Reset the buffer of the tracker."""
         self.num_tracks = 0
-        self.tracks = dict()
+        self.tracks = {}
         self.backdrops = []
 
     def update(self, ids, bboxes, embeds, labels, frame_id):
@@ -130,10 +130,12 @@ class QuasiDenseTracker(BaseTracker):
                 labels=labels[backdrop_inds]))
 
         # pop memo
-        invalid_ids = []
-        for k, v in self.tracks.items():
-            if frame_id - v['last_frame'] >= self.memo_tracklet_frames:
-                invalid_ids.append(k)
+        invalid_ids = [
+            k
+            for k, v in self.tracks.items()
+            if frame_id - v['last_frame'] >= self.memo_tracklet_frames
+        ]
+
         for invalid_id in invalid_ids:
             self.tracks.pop(invalid_id)
 
@@ -250,17 +252,15 @@ class QuasiDenseTracker(BaseTracker):
             for i in range(bboxes.size(0)):
                 conf, memo_ind = torch.max(scores[i, :], dim=0)
                 id = memo_ids[memo_ind]
-                if conf > self.match_score_thr:
-                    if id > -1:
+                if conf > self.match_score_thr and id > -1:
                         # keep bboxes with high object score
                         # and remove background bboxes
-                        if bboxes[i, -1] > self.obj_score_thr:
-                            ids[i] = id
-                            scores[:i, memo_ind] = 0
-                            scores[i + 1:, memo_ind] = 0
-                        else:
-                            if conf > self.nms_conf_thr:
-                                ids[i] = -2
+                    if bboxes[i, -1] > self.obj_score_thr:
+                        ids[i] = id
+                        scores[:i, memo_ind] = 0
+                        scores[i + 1:, memo_ind] = 0
+                    elif conf > self.nms_conf_thr:
+                        ids[i] = -2
         # initialize new tracks
         new_inds = (ids == -1) & (bboxes[:, 4] > self.init_score_thr).cpu()
         num_news = new_inds.sum()

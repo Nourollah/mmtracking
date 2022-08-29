@@ -10,14 +10,20 @@ data = dict(
         oversample_thr=1e-3,
         dataset=dict(
             type=dataset_type,
-            ann_file=data_root + 'annotations/lvis_v1_train.json',
-            img_prefix=data_root)),
+            ann_file=f'{data_root}annotations/lvis_v1_train.json',
+            img_prefix=data_root,
+        ),
+    ),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/lvis_v1_val.json',
-        img_prefix=data_root),
+        ann_file=f'{data_root}annotations/lvis_v1_val.json',
+        img_prefix=data_root,
+    ),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/lvis_v1_val.json',
-        img_prefix=data_root))
+        ann_file=f'{data_root}annotations/lvis_v1_val.json',
+        img_prefix=data_root,
+    ),
+)
+
 evaluation = dict(metric=['bbox', 'segm'])

@@ -48,7 +48,7 @@ class ReIDDataset(BaseDataset):
     def _parse_ann_info(self, data_infos):
         """Parse person id annotations."""
         index_tmp_dic = defaultdict(list)
-        self.index_dic = dict()
+        self.index_dic = {}
         for idx, info in enumerate(data_infos):
             pid = info['gt_label']
             index_tmp_dic[int(pid)].append(idx)
@@ -73,8 +73,8 @@ class ReIDDataset(BaseDataset):
             List: Annotation information of num_ids X ins_per_id images.
         """
         assert len(self.pids) >= num_ids, \
-            'The number of person ids in the training set must ' \
-            'be greater than the number of person ids in the sample.'
+                'The number of person ids in the training set must ' \
+                'be greater than the number of person ids in the sample.'
 
         pos_idxs = self.index_dic[int(pos_pid)]
         idxs_list = []
@@ -94,11 +94,7 @@ class ReIDDataset(BaseDataset):
             idxs_list.extend(neg_idxs[np.random.choice(
                 neg_idxs.shape[0], ins_per_id, replace=True)])
 
-        triplet_img_infos = []
-        for idx in idxs_list:
-            triplet_img_infos.append(copy.deepcopy(self.data_infos[idx]))
-
-        return triplet_img_infos
+        return [copy.deepcopy(self.data_infos[idx]) for idx in idxs_list]
 
     def prepare_data(self, idx):
         """Prepare results for image (e.g. the annotation information, ...)."""
@@ -187,13 +183,13 @@ class ReIDDataset(BaseDataset):
             all_AP.append(AP)
 
         assert num_valid_q > 0, \
-            'Error: all query identities do not appear in gallery'
+                'Error: all query identities do not appear in gallery'
 
         all_cmc = np.asarray(all_cmc).astype(np.float32)
         all_cmc = all_cmc.sum(0) / num_valid_q
         mAP = np.mean(all_AP)
 
-        eval_results = dict()
+        eval_results = {}
         if 'mAP' in metrics:
             eval_results['mAP'] = np.around(mAP, decimals=3)
         if 'CMC' in metrics:

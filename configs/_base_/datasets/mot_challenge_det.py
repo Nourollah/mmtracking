@@ -40,20 +40,25 @@ data = dict(
     workers_per_gpu=2,
     train=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/half-train_cocoformat.json',
-        img_prefix=data_root + 'train',
-        classes=('pedestrian', ),
-        pipeline=train_pipeline),
+        ann_file=f'{data_root}annotations/half-train_cocoformat.json',
+        img_prefix=f'{data_root}train',
+        classes=('pedestrian',),
+        pipeline=train_pipeline,
+    ),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/half-val_cocoformat.json',
-        img_prefix=data_root + 'train',
-        classes=('pedestrian', ),
-        pipeline=test_pipeline),
+        ann_file=f'{data_root}annotations/half-val_cocoformat.json',
+        img_prefix=f'{data_root}train',
+        classes=('pedestrian',),
+        pipeline=test_pipeline,
+    ),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/half-val_cocoformat.json',
-        img_prefix=data_root + 'train',
-        classes=('pedestrian', ),
-        pipeline=test_pipeline))
+        ann_file=f'{data_root}annotations/half-val_cocoformat.json',
+        img_prefix=f'{data_root}train',
+        classes=('pedestrian',),
+        pipeline=test_pipeline,
+    ),
+)
+
 evaluation = dict(metric=['bbox'])

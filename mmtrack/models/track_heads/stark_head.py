@@ -373,10 +373,7 @@ class StarkHead(BaseModule):
                         x.flatten(2).permute(2, 0, 1).contiguous())
         # concatenate
         for name, x in seq_dict.items():
-            if name == 'mask':
-                seq_dict[name] = torch.cat(x, dim=1)
-            else:
-                seq_dict[name] = torch.cat(x, dim=0)
+            seq_dict[name] = torch.cat(x, dim=1) if name == 'mask' else torch.cat(x, dim=0)
         return seq_dict
 
     def forward_bbox_head(self, feat, enc_mem):
@@ -455,20 +452,15 @@ class StarkHead(BaseModule):
 
         # 3. forward bbox head and classification head
         track_results = {}
-        if not self.training:
-            if self.cls_head is not None:
-                # forward the classification head
-                track_results['pred_logits'] = self.cls_head(outs_dec)
+        if self.cls_head is not None:
+            # forward the classification head
+            track_results['pred_logits'] = self.cls_head(outs_dec)
+        elif self.training:
+            # stage-2 training: forward the box prediction head
             track_results['pred_bboxes'] = self.forward_bbox_head(
                 outs_dec, enc_mem)
-        else:
-            if self.cls_head is not None:
-                # stage-1 training: forward the classification head
-                track_results['pred_logits'] = self.cls_head(outs_dec)
-            else:
-                # stage-2 training: forward the box prediction head
-                track_results['pred_bboxes'] = self.forward_bbox_head(
-                    outs_dec, enc_mem)
+        track_results['pred_bboxes'] = self.forward_bbox_head(
+            outs_dec, enc_mem)
         return track_results
 
     def loss(self, track_results, gt_bboxes, gt_labels, img_size=None):
@@ -489,7 +481,7 @@ class StarkHead(BaseModule):
         Returns:
             dict[str, Tensor]: a dictionary of loss components.
         """
-        losses = dict()
+        losses = {}
 
         if self.cls_head is None:
             # the stage-1 training

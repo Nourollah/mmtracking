@@ -5,11 +5,15 @@ model = dict(reid=dict(head=dict(num_classes=371)))
 data_root = 'data/MOT16/'
 data = dict(
     train=dict(
-        data_prefix=data_root + 'reid/imgs',
-        ann_file=data_root + 'reid/meta/train_80.txt'),
+        data_prefix=f'{data_root}reid/imgs',
+        ann_file=f'{data_root}reid/meta/train_80.txt',
+    ),
     val=dict(
-        data_prefix=data_root + 'reid/imgs',
-        ann_file=data_root + 'reid/meta/val_20.txt'),
+        data_prefix=f'{data_root}reid/imgs',
+        ann_file=f'{data_root}reid/meta/val_20.txt',
+    ),
     test=dict(
-        data_prefix=data_root + 'reid/imgs',
-        ann_file=data_root + 'reid/meta/val_20.txt'))
+        data_prefix=f'{data_root}reid/imgs',
+        ann_file=f'{data_root}reid/meta/val_20.txt',
+    ),
+)

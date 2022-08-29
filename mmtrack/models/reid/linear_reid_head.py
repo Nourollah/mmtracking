@@ -112,7 +112,7 @@ class LinearReIDHead(BaseHead):
     @force_fp32(apply_to=('feats', 'cls_score'))
     def loss(self, gt_label, feats, cls_score=None):
         """Compute losses."""
-        losses = dict()
+        losses = {}
 
         if self.loss_triplet:
             losses['triplet_loss'] = self.loss_triplet(feats, gt_label)

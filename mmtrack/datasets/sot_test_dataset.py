@@ -36,14 +36,11 @@ class SOTTestDataset(CocoVideoDataset):
         gt_bboxes[2] += gt_bboxes[0]
         gt_bboxes[3] += gt_bboxes[1]
         gt_labels = np.array(self.cat2label[ann_info[0]['category_id']])
-        if 'ignore' in ann_info[0]:
-            ann = dict(
-                bboxes=gt_bboxes,
-                labels=gt_labels,
-                ignore=ann_info[0]['ignore'])
-        else:
-            ann = dict(bboxes=gt_bboxes, labels=gt_labels)
-        return ann
+        return (
+            dict(bboxes=gt_bboxes, labels=gt_labels, ignore=ann_info[0]['ignore'])
+            if 'ignore' in ann_info[0]
+            else dict(bboxes=gt_bboxes, labels=gt_labels)
+        )
 
     def evaluate(self, results, metric=['track'], logger=None):
         """Evaluation in OPE protocol.
@@ -70,7 +67,7 @@ class SOTTestDataset(CocoVideoDataset):
             if metric not in allowed_metrics:
                 raise KeyError(f'metric {metric} is not supported.')
 
-        eval_results = dict()
+        eval_results = {}
         if 'track' in metrics:
             assert len(self.data_infos) == len(results['track_bboxes'])
             print_log('Evaluate OPE Benchmark...', logger=logger)
@@ -93,7 +90,7 @@ class SOTTestDataset(CocoVideoDataset):
             ]
             track_eval_results = eval_sot_ope(
                 results=track_bboxes, annotations=ann_infos)
-            eval_results.update(track_eval_results)
+            eval_results |= track_eval_results
 
             for k, v in eval_results.items():
                 if isinstance(v, float):

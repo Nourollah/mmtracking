@@ -97,7 +97,7 @@ class QDTrack(BaseMultiObjectTracker):
         """
         x = self.detector.extract_feat(img)
 
-        losses = dict()
+        losses = {}
 
         # RPN forward and loss
         if self.detector.with_rpn:
@@ -110,7 +110,7 @@ class QDTrack(BaseMultiObjectTracker):
                 gt_labels=None,
                 gt_bboxes_ignore=gt_bboxes_ignore,
                 proposal_cfg=proposal_cfg)
-            losses.update(rpn_losses)
+            losses |= rpn_losses
 
         roi_losses = self.detector.roi_head.forward_train(
             x, img_metas, proposal_list, gt_bboxes, gt_labels,

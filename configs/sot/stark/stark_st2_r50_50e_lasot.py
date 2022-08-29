@@ -57,37 +57,44 @@ data = dict(
         dataset_cfgs=[
             dict(
                 type='GOT10kDataset',
-                ann_file=data_root +
-                'got10k/annotations/got10k_train_infos.txt',
-                img_prefix=data_root + 'got10k',
+                ann_file=data_root
+                + 'got10k/annotations/got10k_train_infos.txt',
+                img_prefix=f'{data_root}got10k',
                 pipeline=train_pipeline,
                 split='train',
-                test_mode=False),
+                test_mode=False,
+            ),
             dict(
                 type='LaSOTDataset',
-                ann_file=data_root + 'lasot/annotations/lasot_train_infos.txt',
-                img_prefix=data_root + 'lasot/LaSOTBenchmark',
+                ann_file=f'{data_root}lasot/annotations/lasot_train_infos.txt',
+                img_prefix=f'{data_root}lasot/LaSOTBenchmark',
                 pipeline=train_pipeline,
                 split='train',
-                test_mode=False),
+                test_mode=False,
+            ),
             dict(
                 type='TrackingNetDataset',
-                ann_file=data_root +
-                'trackingnet/annotations/trackingnet_train_infos.txt',
-                img_prefix=data_root + 'trackingnet',
+                ann_file=data_root
+                + 'trackingnet/annotations/trackingnet_train_infos.txt',
+                img_prefix=f'{data_root}trackingnet',
                 pipeline=train_pipeline,
                 split='train',
-                test_mode=False),
+                test_mode=False,
+            ),
             dict(
                 type='SOTCocoDataset',
-                ann_file=data_root +
-                'coco/annotations/instances_train2017.json',
-                img_prefix=data_root + 'coco/train2017',
+                ann_file=data_root
+                + 'coco/annotations/instances_train2017.json',
+                img_prefix=f'{data_root}coco/train2017',
                 pipeline=train_pipeline,
                 split='train',
-                test_mode=False)
-        ]),
+                test_mode=False,
+            ),
+        ],
+    ),
     test=dict(
         type='LaSOTDataset',
-        ann_file=data_root + 'lasot/annotations/lasot_test_infos.txt',
-        img_prefix=data_root + 'lasot/LaSOTBenchmark'))
+        ann_file=f'{data_root}lasot/annotations/lasot_test_infos.txt',
+        img_prefix=f'{data_root}lasot/LaSOTBenchmark',
+    ),
+)

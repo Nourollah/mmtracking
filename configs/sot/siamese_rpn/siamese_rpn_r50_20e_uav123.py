@@ -9,11 +9,14 @@ data_root = 'data/'
 data = dict(
     val=dict(
         type='UAV123Dataset',
-        ann_file=data_root + 'UAV123/annotations/uav123_infos.txt',
-        img_prefix=data_root + 'UAV123',
-        only_eval_visible=False),
+        ann_file=f'{data_root}UAV123/annotations/uav123_infos.txt',
+        img_prefix=f'{data_root}UAV123',
+        only_eval_visible=False,
+    ),
     test=dict(
         type='UAV123Dataset',
-        ann_file=data_root + 'UAV123/annotations/uav123_infos.txt',
-        img_prefix=data_root + 'UAV123',
-        only_eval_visible=False))
+        ann_file=f'{data_root}UAV123/annotations/uav123_infos.txt',
+        img_prefix=f'{data_root}UAV123',
+        only_eval_visible=False,
+    ),
+)

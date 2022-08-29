@@ -37,8 +37,11 @@ test_pipeline = [
 ]
 data = dict(
     val=dict(
-        detection_file=data_root + 'annotations/half-val_detections.pkl',
-        pipeline=test_pipeline),
+        detection_file=f'{data_root}annotations/half-val_detections.pkl',
+        pipeline=test_pipeline,
+    ),
     test=dict(
-        detection_file=data_root + 'annotations/half-val_detections.pkl',
-        pipeline=test_pipeline))
+        detection_file=f'{data_root}annotations/half-val_detections.pkl',
+        pipeline=test_pipeline,
+    ),
+)

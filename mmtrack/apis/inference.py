@@ -201,7 +201,7 @@ def inference_vid(model,
         num_left_ref_imgs = ref_img_sampler.get('num_left_ref_imgs')
         frame_stride = ref_img_sampler.get('frame_stride')
         if frame_id == 0:
-            for i in range(num_left_ref_imgs):
+            for _ in range(num_left_ref_imgs):
                 one_ref_img = dict(
                     img=image.astype(np.float32).copy(),
                     img_info=dict(frame_id=frame_id))

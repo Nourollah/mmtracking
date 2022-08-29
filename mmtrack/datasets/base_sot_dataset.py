@@ -87,13 +87,12 @@ class BaseSOTDataset(Dataset, metaclass=ABCMeta):
         self.test_memo = Dict()
 
     def __getitem__(self, ind):
-        if self.test_mode:
-            assert isinstance(ind, tuple)
-            # the first element in the tuple is the video index and the second
-            # element in the tuple is the frame index
-            return self.prepare_test_data(ind[0], ind[1])
-        else:
+        if not self.test_mode:
             return self.prepare_train_data(ind)
+        assert isinstance(ind, tuple)
+        # the first element in the tuple is the video index and the second
+        # element in the tuple is the frame index
+        return self.prepare_test_data(ind[0], ind[1])
 
     @abstractmethod
     def load_data_infos(self, split='train'):
@@ -173,9 +172,7 @@ class BaseSOTDataset(Dataset, metaclass=ABCMeta):
             bboxes[:, 3] > self.bbox_min_size)
         visible_info['visible'] = visible_info['visible'] & bboxes_isvalid
         bboxes[:, 2:] += bboxes[:, :2]
-        ann_infos = dict(
-            bboxes=bboxes, bboxes_isvalid=bboxes_isvalid, **visible_info)
-        return ann_infos
+        return dict(bboxes=bboxes, bboxes_isvalid=bboxes_isvalid, **visible_info)
 
     def get_img_infos_from_video(self, video_ind):
         """Get image information in a video.
@@ -186,18 +183,19 @@ class BaseSOTDataset(Dataset, metaclass=ABCMeta):
         Returns:
             dict: {'filename': list[str], 'frame_ids':ndarray, 'video_id':int}
         """
-        img_names = []
         start_frame_id = self.data_infos[video_ind]['start_frame_id']
         end_frame_id = self.data_infos[video_ind]['end_frame_id']
         framename_template = self.data_infos[video_ind]['framename_template']
-        for frame_id in range(start_frame_id, end_frame_id + 1):
-            img_names.append(
-                osp.join(self.data_infos[video_ind]['video_path'],
-                         framename_template % frame_id))
+        img_names = [
+            osp.join(
+                self.data_infos[video_ind]['video_path'],
+                framename_template % frame_id,
+            )
+            for frame_id in range(start_frame_id, end_frame_id + 1)
+        ]
+
         frame_ids = np.arange(self.get_len_per_video(video_ind))
-        img_infos = dict(
-            filename=img_names, frame_ids=frame_ids, video_id=video_ind)
-        return img_infos
+        return dict(filename=img_names, frame_ids=frame_ids, video_id=video_ind)
 
     def prepare_test_data(self, video_ind, frame_ind):
         """Get testing data of one frame. We parse one video, get one frame
@@ -300,7 +298,7 @@ class BaseSOTDataset(Dataset, metaclass=ABCMeta):
             visible_infos.append(video_anns['visible'])
 
         # tracking_bboxes converting code
-        eval_results = dict()
+        eval_results = {}
         if 'track' in metrics:
             assert len(self) == len(
                 results['track_bboxes']
@@ -323,7 +321,7 @@ class BaseSOTDataset(Dataset, metaclass=ABCMeta):
                 results=track_bboxes,
                 annotations=gt_bboxes,
                 visible_infos=visible_infos)
-            eval_results.update(track_eval_results)
+            eval_results |= track_eval_results
 
             for k, v in eval_results.items():
                 if isinstance(v, float):

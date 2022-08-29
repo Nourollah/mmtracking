@@ -37,8 +37,7 @@ class SiamRPN(BaseSingleObjectTracker):
         if isinstance(pretrains, dict):
             warnings.warn('DeprecationWarning: pretrains is deprecated, '
                           'please use "init_cfg" instead')
-            backbone_pretrain = pretrains.get('backbone', None)
-            if backbone_pretrain:
+            if backbone_pretrain := pretrains.get('backbone', None):
                 backbone.init_cfg = dict(
                     type='Pretrained', checkpoint=backbone_pretrain)
             else:
@@ -66,12 +65,12 @@ class SiamRPN(BaseSingleObjectTracker):
 
         if self.with_neck:
             for m in self.neck.modules():
-                if isinstance(m, _ConvNd) or isinstance(m, _BatchNorm):
+                if isinstance(m, (_ConvNd, _BatchNorm)):
                     m.reset_parameters()
 
         if self.with_head:
             for m in self.head.modules():
-                if isinstance(m, _ConvNd) or isinstance(m, _BatchNorm):
+                if isinstance(m, (_ConvNd, _BatchNorm)):
                     m.reset_parameters()
 
     def forward_template(self, z_img):
@@ -204,9 +203,10 @@ class SiamRPN(BaseSingleObjectTracker):
         z_height = bbox[3] + self.test_cfg.context_amount * (bbox[2] + bbox[3])
         z_size = torch.round(torch.sqrt(z_width * z_height))
         avg_channel = torch.mean(img, dim=(0, 2, 3))
-        z_crop = self.get_cropped_img(img, bbox[0:2],
-                                      self.test_cfg.exemplar_size, z_size,
-                                      avg_channel)
+        z_crop = self.get_cropped_img(
+            img, bbox[:2], self.test_cfg.exemplar_size, z_size, avg_channel
+        )
+
         z_feat = self.forward_template(z_crop)
         return z_feat, avg_channel
 
@@ -234,9 +234,10 @@ class SiamRPN(BaseSingleObjectTracker):
 
         x_size = torch.round(
             z_size * (self.test_cfg.search_size / self.test_cfg.exemplar_size))
-        x_crop = self.get_cropped_img(img, bbox[0:2],
-                                      self.test_cfg.search_size, x_size,
-                                      avg_channel)
+        x_crop = self.get_cropped_img(
+            img, bbox[:2], self.test_cfg.search_size, x_size, avg_channel
+        )
+
 
         x_feat = self.forward_search(x_crop)
         cls_score, bbox_pred = self.head(z_feat, x_feat)
@@ -375,14 +376,15 @@ class SiamRPN(BaseSingleObjectTracker):
             bbox_pred, best_score = self.simple_test_ope(
                 img, frame_id, gt_bboxes)
 
-        results = dict()
-        if best_score == -1.:
-            results['track_bboxes'] = np.concatenate(
-                (bbox_pred.cpu().numpy(), np.array([best_score])))
-        else:
-            results['track_bboxes'] = np.concatenate(
-                (bbox_pred.cpu().numpy(), best_score.cpu().numpy()[None]))
-        return results
+        return {
+            'track_bboxes': np.concatenate(
+                (bbox_pred.cpu().numpy(), np.array([best_score]))
+            )
+            if best_score == -1.0
+            else np.concatenate(
+                (bbox_pred.cpu().numpy(), best_score.cpu().numpy()[None])
+            )
+        }
 
     def forward_train(self, img, img_metas, gt_bboxes, search_img,
                       search_img_metas, search_gt_bboxes, is_positive_pairs,
@@ -428,11 +430,11 @@ class SiamRPN(BaseSingleObjectTracker):
         x_feat = self.forward_search(search_img)
         cls_score, bbox_pred = self.head(z_feat, x_feat)
 
-        losses = dict()
+        losses = {}
         bbox_targets = self.head.get_targets(search_gt_bboxes,
                                              cls_score.shape[2:],
                                              is_positive_pairs)
         head_losses = self.head.loss(cls_score, bbox_pred, *bbox_targets)
-        losses.update(head_losses)
+        losses |= head_losses
 
         return losses

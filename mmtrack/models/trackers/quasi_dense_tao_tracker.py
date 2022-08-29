@@ -65,12 +65,12 @@ class QuasiDenseTAOTracker(BaseTracker):
         self.match_with_cosine = match_with_cosine
 
         self.num_tracks = 0
-        self.tracks = dict()
+        self.tracks = {}
 
     def reset(self):
         """Reset the buffer of the tracker."""
         self.num_tracks = 0
-        self.tracks = dict()
+        self.tracks = {}
 
     def update(self, ids, bboxes, labels, embeds, frame_id):
         """Tracking forward function.
@@ -105,10 +105,12 @@ class QuasiDenseTAOTracker(BaseTracker):
                     frame_ids=[frame_id])
 
         # pop memo
-        invalid_ids = []
-        for k, v in self.tracks.items():
-            if frame_id - v['frame_ids'][-1] >= self.memo_frames:
-                invalid_ids.append(k)
+        invalid_ids = [
+            k
+            for k, v in self.tracks.items()
+            if frame_id - v['frame_ids'][-1] >= self.memo_frames
+        ]
+
         for invalid_id in invalid_ids:
             self.tracks.pop(invalid_id)
 

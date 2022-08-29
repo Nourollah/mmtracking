@@ -33,11 +33,11 @@ class TaoDataset(CocoVideoDataset):
 
     def load_annotations(self, ann_file):
         """Load annotation from annotation file."""
-        if not self.load_as_video:
-            data_infos = self.load_lvis_anns(ann_file)
-        else:
-            data_infos = self.load_tao_anns(ann_file)
-        return data_infos
+        return (
+            self.load_tao_anns(ann_file)
+            if self.load_as_video
+            else self.load_lvis_anns(ann_file)
+        )
 
     def load_lvis_anns(self, ann_file):
         """Load annotation from COCO style annotation file.
@@ -180,10 +180,8 @@ class TaoDataset(CocoVideoDataset):
         else:
             tmp_dir = None
         os.makedirs(resfile_path, exist_ok=True)
-        result_files = dict()
-
         bbox_results = self._det2json(results['det_bboxes'])
-        result_files['bbox'] = f'{resfile_path}/tao_bbox.json'
+        result_files = {'bbox': f'{resfile_path}/tao_bbox.json'}
         mmcv.dump(bbox_results, result_files['bbox'])
 
         track_results = self._track2json(results['track_bboxes'])
@@ -210,7 +208,7 @@ class TaoDataset(CocoVideoDataset):
 
         result_files, tmp_dir = self.format_results(results, resfile_path)
 
-        eval_results = dict()
+        eval_results = {}
 
         if 'track' in metrics:
             if tao is None:
@@ -230,7 +228,7 @@ class TaoDataset(CocoVideoDataset):
             tao_results = tao_eval.get_results()
             for k, v in tao_results.items():
                 if isinstance(k, str) and k.startswith('AP'):
-                    key = 'track_{}'.format(k)
+                    key = f'track_{k}'
                     val = float('{:.3f}'.format(float(v)))
                     eval_results[key] = val
 
@@ -254,7 +252,7 @@ class TaoDataset(CocoVideoDataset):
             lvis_results = lvis_eval.get_results()
             for k, v in lvis_results.items():
                 if k.startswith('AP'):
-                    key = '{}_{}'.format('bbox', k)
+                    key = f'bbox_{k}'
                     val = float('{:.3f}'.format(float(v)))
                     eval_results[key] = val
             ap_summary = ' '.join([

@@ -72,7 +72,7 @@ class Stark(BaseSingleObjectTracker):
 
         if self.with_neck:
             for m in self.neck.modules():
-                if isinstance(m, _ConvNd) or isinstance(m, _BatchNorm):
+                if isinstance(m, (_ConvNd, _BatchNorm)):
                     m.reset_parameters()
 
         if self.with_head:
@@ -190,8 +190,9 @@ class Stark(BaseSingleObjectTracker):
         self.z_dict_list.append(self.z_dict)
 
         # get other templates
-        for _ in range(self.num_extra_template):
-            self.z_dict_list.append(deepcopy(self.z_dict))
+        self.z_dict_list.extend(
+            deepcopy(self.z_dict) for _ in range(self.num_extra_template)
+        )
 
     def update_template(self, img, bbox, conf_score):
         """Update the dymanic templates.
@@ -247,7 +248,7 @@ class Stark(BaseSingleObjectTracker):
         # cropped image based in the original image.
         x_shift, y_shift = prev_bbox[0] - cropped_img_half_size, prev_bbox[
             1] - cropped_img_half_size
-        pred_bbox[0:4:2] += x_shift
+        pred_bbox[:4:2] += x_shift
         pred_bbox[1:4:2] += y_shift
 
         return pred_bbox
@@ -335,10 +336,11 @@ class Stark(BaseSingleObjectTracker):
             best_score, bbox_pred = self.track(img, self.memo.bbox)
             self.memo.bbox = bbox_xyxy_to_cxcywh(bbox_pred)
 
-        results = dict()
-        results['track_bboxes'] = np.concatenate(
-            (bbox_pred.cpu().numpy(), np.array([best_score])))
-        return results
+        return {
+            'track_bboxes': np.concatenate(
+                (bbox_pred.cpu().numpy(), np.array([best_score]))
+            )
+        }
 
     def forward_train(self,
                       img,
@@ -416,11 +418,11 @@ class Stark(BaseSingleObjectTracker):
         '''
         track_results = self.head(head_inputs)
 
-        losses = dict()
+        losses = {}
         head_losses = self.head.loss(track_results, search_gt_bboxes,
                                      search_gt_labels,
                                      search_img[:, 0].shape[-2:])
 
-        losses.update(head_losses)
+        losses |= head_losses
 
         return losses
